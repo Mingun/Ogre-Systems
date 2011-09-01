@@ -51,7 +51,7 @@ namespace Script {
         ScriptEngineList::iterator it;
         for ( it = mScriptEngines.begin(); it != mScriptEngines.end(); ++it )
         {
-            it->second->registerModule( module.get() );
+            it->second->registerModule( module );
         }
     }
     //-----------------------------------------------------------------------
@@ -74,7 +74,7 @@ namespace Script {
             ScriptEngineList::iterator it;
             for ( it = mScriptEngines.begin(); it != mScriptEngines.end(); ++it )
             {
-                it->second->registerClass( clazz.get() );
+                it->second->registerClass( clazz );
             }
         }
     }
@@ -137,7 +137,7 @@ namespace Script {
         ScriptEngineList::iterator it = mScriptEngines.begin();
         for ( ; it != mScriptEngines.end(); ++it )
         {
-            it->second->registerObject( name, o.get(), bAllowDelete );
+            it->second->registerObject( name, o, bAllowDelete );
         }
     }
     //-----------------------------------------------------------------------
@@ -191,7 +191,7 @@ namespace Script {
             ClassList::iterator it;
             for ( it = mClasses.begin(); it != mClasses.end(); ++it )
             {
-                engine->registerClass( it->second.get() );
+                engine->registerClass( it->second );
             }
         }
         {
@@ -199,7 +199,7 @@ namespace Script {
             ObjectList::iterator it;
             for ( it = mObjects.begin(); it != mObjects.end(); ++it )
             {
-                engine->registerObject( it->first, it->second.get() );
+                engine->registerObject( it->first, it->second );
             }
         }
     }

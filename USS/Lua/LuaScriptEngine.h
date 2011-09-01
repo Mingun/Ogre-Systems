@@ -26,17 +26,8 @@ class LuaScriptEngine : public ScriptEngine
     } type;
     boost::pool<> pool;
 
-    struct Class
+    struct Scriptable
     {
-        static luaL_Reg mt[];
-        static int __index   (lua_State *L);
-        static int __newindex(lua_State *L);
-        static int __call    (lua_State *L);
-        static int __GC      (lua_State *L);
-    };
-    struct Object
-    {
-        static luaL_Reg mt[];
         /** Вызывается при попытке получить доступ к полю объекта.
         @remarks
             Алгоритм:
@@ -60,6 +51,8 @@ class LuaScriptEngine : public ScriptEngine
         static int __call    (lua_State *L);
         /// Вызывается при сборке IScriptable сборщиком мусора Lua.
         static int __GC      (lua_State *L);
+        /// Метаметод для превращения IScriptable в строку.
+        static int __tostring(lua_State *L);
     };
 
     class Compiler 
@@ -90,12 +83,12 @@ class LuaScriptEngine : public ScriptEngine
 public:
     LuaScriptEngine();
     virtual ~LuaScriptEngine();
-    virtual void registerModule(IModule* module);
-    virtual void unregisterModule(IModule* module);
-    virtual void registerClass(IClass *clazz);
-    virtual void unregisterClass(IClass *clazz);
-    virtual bool registerObject(const String& name, IObject* object, bool bAllowDelete = true);
-    virtual void unregisterObject(IObject* object);
+    virtual void registerModule(IModulePtr module);
+    virtual void unregisterModule(IModulePtr module);
+    virtual void registerClass(IClassPtr clazz);
+    virtual void unregisterClass(IClassPtr clazz);
+    virtual bool registerObject(const String& name, IObjectPtr object, bool bAllowDelete = true);
+    virtual void unregisterObject(IObjectPtr object);
     virtual StringVector extensions() const;
     virtual String version() const;
     virtual String getType() const;
@@ -103,16 +96,18 @@ public:
     virtual bool compile(DataStreamPtr source, DataStreamPtr target, CompileOption options, bool stripDebug = false);
 private:
     virtual void unregister();
+    /** Вставляет объект в стек и присваивает ему метатаблицу, регистрируя в
+        ней функции, необходимые для его работы.
+    */
+    void pushObject(IObjectPtr object);
 
 private:
     static IMethod* findMethodTable(lua_State *L, const FieldList& fields, const String& name);
-    static IConstructor* findConstructorTable(lua_State *L, const ConstructorList& constructors);
     static IEvaluator* findEvaluatorTable(lua_State *L, const EvaluatorList& evaluators);
     static void pushObject(lua_State* L, IObject* o);
 
     static IScriptable* getScriptable(lua_State *L, int index);
     static IObject* getObject(lua_State *L, int index);
-    static IClass*  getClass (lua_State *L, int index);
 
 private:
     /** Аллокатор памяти для Lua.
@@ -141,10 +136,6 @@ private:
     /// Функция-замыкание, возвращаемое для методов. Таким образом методы можно
     /// использовать как обычные функции Lua.
     static int accessor(lua_State *L);
-
-private:
-    /// Метаметод для превращения IScriptable в строку.
-    static int __tostring(lua_State *L);
 };
 
 #endif // __LuaScriptEngine_H__

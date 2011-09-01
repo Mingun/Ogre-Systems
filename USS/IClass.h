@@ -6,12 +6,11 @@
 #include "USS/USSPrerequisites.h"
 
 #include "Common/OgreString.h"
-#include "USS/IScriptable.h"
-#include "USS/IField.h"
+#include "USS/IObject.h"
 
 namespace Script {
 
-    class _ScriptExport IClass : public IScriptable
+    class _ScriptExport IClass : public IObject
     {
     public:
         virtual ~IClass() {}
@@ -23,8 +22,6 @@ namespace Script {
         virtual MethodList      getMethods() const = 0;
         /// @return Список всех свойств объекта.
         virtual PropertyList    getProperties() const = 0;
-        /// @return Список всех конструкторов объекта.
-        virtual ConstructorList getConstructors() const = 0;
         /** @return Список вычислителей, которыми можно вычислить этот объект.
             Если этот список пустой, объект нельзя вычислять, как функцию.
         */

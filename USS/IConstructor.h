@@ -6,24 +6,18 @@
 #include "USS/USSPrerequisites.h"
 
 #include "Common/OgreString.h"
-#include "USS/IField.h"
+#include "USS/IMethod.h"
+#include "USS/ScriptVar.h"
 
 namespace Script {
-    class IConstructor : public IField
+    class IConstructor : public IMethod
     {
     public:
         virtual ~IConstructor() {}
         virtual TYPE getType() const { return Constructor; }
         virtual const String& getName() const { return StringUtil::BLANK; }
 
-        virtual ScriptVarListPtr inArgs()  const = 0;
-        /** Создает объект.
-        @param inArgs 
-            Параметры консруктора с актуальными значениями.
-        @return 
-            Новый объект.
-        */
-        virtual IObject* create(const ScriptVarList& inArgs) const = 0;
+        virtual ScriptVarListPtr outArgs() const { return ScriptVarListPtr(new ScriptableVar()); }
     };
 }// namespace Script
 

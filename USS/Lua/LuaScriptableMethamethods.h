@@ -1,20 +1,4 @@
 
-#ifdef RegisterFunctionForLua
-#undef RegisterFunctionForLua
-#endif
-#define RegisterFunctionForLua(name) \
-    {#name, LuaScriptEngine::Object::name}
-
-luaL_Reg LuaScriptEngine::Object::mt[] = {
-    RegisterFunctionForLua(__call)
-  , {"__gc", LuaScriptEngine::Object::__GC}
-  , RegisterFunctionForLua(__index)
-  , RegisterFunctionForLua(__newindex)
-  , {"__tostring", LuaScriptEngine::__tostring}
-
-  , {NULL, NULL}
-};
-
 /* convert a stack index to positive */
 #define abs_index(L, i)		((i) > 0 || (i) <= LUA_REGISTRYINDEX ? (i) : \
 					lua_gettop(L) + (i) + 1)
@@ -24,7 +8,7 @@ luaL_Reg LuaScriptEngine::Object::mt[] = {
 // 3. Вернуть функцию-замыкание с информацией о том, метод с каким именем был вызван.
 // 4. Если объект индексируеый, то проиндексировать его. В случае успеха выйти.
 // 5. Перенаправить индексацию в метатаблицу (разрешено использование метаметодов).
-int LuaScriptEngine::Object::__index(lua_State *L)
+int LuaScriptEngine::Scriptable::__index(lua_State *L)
 {
     // стек: [IObject key]
     IObject* o = getObject(L, 1);
@@ -94,7 +78,7 @@ int LuaScriptEngine::Object::__index(lua_State *L)
 // 1. Ищем свойство с указанным именем. Если оно найдено, устанавливаем его и выходим.
 // 2. Ищем подходящий индексатор. Если найден, присваиваем по индексу и выходим.
 // 3. Перенаправляем индексацию в метатаблицу.
-int LuaScriptEngine::Object::__newindex(lua_State *L)
+int LuaScriptEngine::Scriptable::__newindex(lua_State *L)
 {
     // стек: [IObject key value]
     IObject *o = getObject(L, 1);
@@ -154,7 +138,7 @@ int LuaScriptEngine::Object::__newindex(lua_State *L)
 //------------------------------------------------------------------------
 // Алгоритм:
 // 1. Если объект вызываемый, вызвать его и выйти.
-int LuaScriptEngine::Object::__call(lua_State *L)
+int LuaScriptEngine::Scriptable::__call(lua_State *L)
 {
     // стек: [IObject ...]
     IObject* o = getObject(L, 1);
@@ -184,13 +168,24 @@ int LuaScriptEngine::Object::__call(lua_State *L)
     return outArgs->size();
 }
 //------------------------------------------------------------------------
-int LuaScriptEngine::Object::__GC(lua_State *L)
+int LuaScriptEngine::Scriptable::__GC(lua_State *L)
 {
     // стек: [IObject]
     TRACE_STACK;
     //IObject* o = getObject(L, 1);
     //const IClass* c = o->getClass();
     return 0;
+}
+//------------------------------------------------------------------------
+int LuaScriptEngine::Scriptable::__tostring(lua_State *L)
+{
+    IScriptable* s = getScriptable(L, 1);
+    if ( !s )
+        return 0;// Не наш объект оставим в покое
+
+    String str = s->toString();
+    lua_pushlstring( L, str.c_str(), str.size() );
+    return 1;
 }
 
 #undef abs_index

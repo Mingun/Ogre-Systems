@@ -11,11 +11,9 @@ namespace test {
 	#define C(n) \
 	    class C##n : public IConstructor\
 		{\
-            const PairClass* mClass;\
 		public:\
-            C##n(const PairClass* cls) : mClass(cls) {}\
 			virtual ScriptVarListPtr inArgs() const;\
-			virtual IObject* create(const ScriptVarList& inArgs) const;\
+			virtual void eval(IObject* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const;\
 			virtual const String& doc() const;\
 		}
 
@@ -23,23 +21,49 @@ namespace test {
     {
         MethodList      mMethods;
         PropertyList    mProperties;
-        ConstructorList mConstructors;
         IndexatorList   mIndexators;
+        IClass*         mClassStatic;
 
         C(0); C(1); C(2); C(3);
+        friend class PairClassStatic;
     public:
         PairClass();
-        ~PairClass();
+        virtual ~PairClass();
 
-    public:
+    public:// IDocumentable
         virtual const String& doc() const;
+    public:// IScriptable
         virtual String toString() const;
+    public:// IObject
+        virtual const IClass* getClass() const;
+    public:// IClass
         virtual const String& getName() const;
 
         virtual FieldList       getFields() const;
         virtual MethodList      getMethods() const;
         virtual PropertyList    getProperties() const;
-        virtual ConstructorList getConstructors() const;
+        virtual EvaluatorList   getEvaluators() const;
+        virtual IndexatorList   getIndexators() const;
+    };
+
+    class PairClassStatic : public IClass
+    {
+        MethodList      mMethods;
+    public:
+        PairClassStatic();
+        virtual ~PairClassStatic();
+    public:// IDocumentable
+        virtual const String& doc() const;
+    public:// IScriptable
+        virtual String toString() const;
+    public:// IObject
+        virtual const IClass* getClass() const;
+    public:// IClass
+        virtual const String& getName() const;
+
+        virtual FieldList       getFields() const;
+        virtual MethodList      getMethods() const;
+        virtual PropertyList    getProperties() const;
         virtual EvaluatorList   getEvaluators() const;
         virtual IndexatorList   getIndexators() const;
     };

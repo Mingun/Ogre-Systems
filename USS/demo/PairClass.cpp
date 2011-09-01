@@ -235,6 +235,7 @@ public:
     };
 
     PairClass::PairClass()
+        : mClassStatic(new PairClassStatic())
     {
         mMethods.insert(new Method_key());
         mMethods.insert(new Method_value());
@@ -245,11 +246,6 @@ public:
         mProperties.insert(new Property_second());
         mProperties.insert(new Property_OnChange());
 
-        mConstructors.push_back(new C0(this));
-        mConstructors.push_back(new C1(this));
-        mConstructors.push_back(new C2(this));
-        mConstructors.push_back(new C3(this));
-
         mIndexators.push_back(new IntIndexator());
     }
 
@@ -257,12 +253,10 @@ public:
     {
         std::for_each( mMethods.begin(), mMethods.end(), Deleter() );
         std::for_each( mProperties.begin(), mProperties.end(), Deleter() );
-        std::for_each( mConstructors.begin(), mConstructors.end(), Deleter() );
         std::for_each( mIndexators.begin(), mIndexators.end(), Deleter() );
 
         mMethods.clear();
         mProperties.clear();
-        mConstructors.clear();
         mIndexators.clear();
     }
     const String& PairClass::doc() const
@@ -282,12 +276,16 @@ public:
         return name;
     }
 
+    const IClass* PairClass::getClass() const
+    {
+        return mClassStatic;
+    }
+
     FieldList PairClass::getFields() const
     {
         FieldList result;
         result.insert( mMethods.begin(), mMethods.end() );
         result.insert( mProperties.begin(), mProperties.end() );
-        result.insert( mConstructors.begin(), mConstructors.end() );
         return result;
     }
     MethodList PairClass::getMethods() const
@@ -297,10 +295,6 @@ public:
     PropertyList PairClass::getProperties() const
     {
         return mProperties;
-    }
-    ConstructorList PairClass::getConstructors() const
-    {
-        return mConstructors;
     }
     EvaluatorList PairClass::getEvaluators() const
     {
@@ -317,9 +311,11 @@ ScriptVarListPtr PairClass::C0::inArgs() const
 {
     return ScriptVarListPtr(new ScriptVarList());
 }
-IObject* PairClass::C0::create(const ScriptVarList& inArgs) const
+void PairClass::C0::eval(IObject* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
 {
-    return new PairObject(mClass);
+    static_cast<ScriptableVar*>(outArgs[0])->value() = new PairObject(
+        static_cast<PairClass*>(o)
+    );
 }
 const String&  PairClass::C0::doc() const
 {
@@ -333,12 +329,12 @@ ScriptVarListPtr PairClass::C1::inArgs() const
     args->add( new StringVar("key") );
     return args;
 }
-IObject* PairClass::C1::create(const ScriptVarList& inArgs) const
+void PairClass::C1::eval(IObject* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
 {
-    return new PairObject(
+    static_cast<ScriptableVar*>(outArgs[0])->value() = new PairObject(
         static_cast<StringVar*>(inArgs[0])
-      , mClass
-        );
+      , static_cast<PairClass*>(o)
+    );
 }
 const String&  PairClass::C1::doc() const
 {
@@ -353,13 +349,13 @@ ScriptVarListPtr PairClass::C2::inArgs() const
     args->add( new IntVar("value") );
     return args;
 }
-IObject* PairClass::C2::create(const ScriptVarList& inArgs) const
+void PairClass::C2::eval(IObject* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
 {
-    return new PairObject(
+    static_cast<ScriptableVar*>(outArgs[0])->value() = new PairObject(
         static_cast<StringVar*>(inArgs[0])
       , static_cast<IntVar*>(inArgs[1])
-      , mClass
-        );
+      , static_cast<PairClass*>(o)
+    );
 }
 const String&  PairClass::C2::doc() const
 {
@@ -375,20 +371,79 @@ ScriptVarListPtr PairClass::C3::inArgs() const
     args->add( new FunctionVar("OnChange") );
     return args;
 }
-IObject* PairClass::C3::create(const ScriptVarList& inArgs) const
+void PairClass::C3::eval(IObject* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
 {
-    return new PairObject(
+    static_cast<ScriptableVar*>(outArgs[0])->value() = new PairObject(
         static_cast<StringVar*>(inArgs[0])
       , static_cast<IntVar*>(inArgs[1])
       , static_cast<FunctionVar*>(inArgs[2])
-      , mClass
-        );
+      , static_cast<PairClass*>(o)
+    );
 }
 const String&  PairClass::C3::doc() const
 {
     static String doc("Create Pair from ${1} and ${2} and notification function ${3}.");
     return doc;
 }
+//------------------------------------------------------------------------
+    PairClassStatic::PairClassStatic() 
+    {
+        mMethods.insert(new PairClass::C0());
+        mMethods.insert(new PairClass::C1());
+        mMethods.insert(new PairClass::C2());
+        mMethods.insert(new PairClass::C3());
+    }
+
+    PairClassStatic::~PairClassStatic()
+    {
+        std::for_each( mMethods.begin(), mMethods.end(), Deleter() );
+
+        mMethods.clear();
+    }
+
+    const String& PairClassStatic::doc() const
+    {
+        return StringUtil::BLANK;
+    }
+
+    String PairClassStatic::toString() const
+    {
+        return StringUtil::BLANK;
+    }
+
+    const String& PairClassStatic::getName() const
+    {
+        static String s("PairClass");
+        return s;
+    }
+
+    const IClass* PairClassStatic::getClass() const
+    {
+        return NULL;
+    }
+
+    FieldList PairClassStatic::getFields() const
+    {
+        FieldList result;
+        result.insert( mMethods.begin(), mMethods.end() );
+        return result;
+    }
+    MethodList PairClassStatic::getMethods() const
+    {
+        return mMethods;
+    }
+    PropertyList PairClassStatic::getProperties() const
+    {
+        return PropertyList();
+    }
+    EvaluatorList PairClassStatic::getEvaluators() const
+    {
+        return EvaluatorList();
+    }
+    IndexatorList PairClassStatic::getIndexators() const
+    {
+        return IndexatorList();
+    }
 //========================================================================
 // Object
 //========================================================================

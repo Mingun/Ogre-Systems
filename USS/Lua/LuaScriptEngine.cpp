@@ -9,13 +9,14 @@
 #include "LuaBridge.h"
 #include "LuaDebug.h"
 
+#include "USS/IModule.h"
 #include "USS/IClass.h"
 #include "USS/IObject.h"
 #include "USS/IField.h"
 #include "USS/IProperty.h"
 #include "USS/IMethod.h"
 #include "USS/IIndexator.h"
-#include "USS/IConstructor.h"
+#include "USS/IEvaluator.h"
 
 #include <algorithm>
 
@@ -63,47 +64,38 @@ LuaScriptEngine::~LuaScriptEngine()
 //========================================================================
 //                          И Н Т Е Р Ф Е Й С
 //========================================================================
-void LuaScriptEngine::registerModule(IModule* module)
+void LuaScriptEngine::registerModule(IModulePtr module)
 {
     //TODO
 }
 //------------------------------------------------------------------------
-void LuaScriptEngine::unregisterModule(IModule* module)
+void LuaScriptEngine::unregisterModule(IModulePtr module)
 {
     //TODO
 }
 //------------------------------------------------------------------------
-void LuaScriptEngine::registerClass(IClass *clazz) 
+void LuaScriptEngine::registerClass(IClassPtr clazz) 
 {//FIXME при замене объекта метатаблица не поменяется
-    assert( clazz );
-
-    // Сохраняем указатель на фабрику в недрах lua-машины
-    //LuaScriptEngine::pushScriptable( L, clazz );    // стек: [IScriptable]
-    // стек: [] -> [IScriptable]
-    *reinterpret_cast<const IClass**>(lua_newuserdata(L, sizeof(clazz))) = clazz;
-
-    if ( luaL_newmetatable(L, ("USS_C:"+clazz->toString()).c_str()) )// стек: [ud mt]
-    {// В новую таблицу записываем функции доступа к объектам
-        
-        luaL_register(L, NULL, Class::mt);
-    }
-    lua_setmetatable( L, -2 );                 // стек: [ud]
-    lua_setglobal( L, STR2LUA(clazz->getName()) );  // стек: []
+    
+    registerObject(clazz->getName(), clazz);
 }
 //------------------------------------------------------------------------
-void LuaScriptEngine::unregisterClass(IClass* clazz)
+void LuaScriptEngine::unregisterClass(IClassPtr clazz)
 {
     //TODO
 }
 //------------------------------------------------------------------------
-bool LuaScriptEngine::registerObject(const String& name, IObject* o, bool bAllowDelete)
-{
-    //LuaScriptEngine::pushScriptable( L, o );// стек: [IScriptable]
-    lua_setglobal( L, STR2LUA(name) );      // стек: []
+bool LuaScriptEngine::registerObject(const String& name, IObjectPtr o, bool bAllowDelete)
+{                                                   // стек: []
+    lua_pushvalue(L, LUA_GLOBALSINDEX);             // стек: [_G]
+    lua_pushlstring(L, name.c_str(), name.size());  // стек: [_G name]
+    pushObject(o);                                  // стек: [_G name IObject]
+    lua_rawset(L, -3);                              // стек: [_G]
+    lua_pop(L, 1);                                  // стек: []
     return true;
 }
 //------------------------------------------------------------------------
-void LuaScriptEngine::unregisterObject(IObject* o)
+void LuaScriptEngine::unregisterObject(IObjectPtr o)
 {
     //TODO
 }
@@ -193,7 +185,7 @@ bool LuaScriptEngine::compile(DataStreamPtr source, DataStreamPtr target, Script
     }
     return false;
 }
-
+//------------------------------------------------------------------------
 void LuaScriptEngine::unregister()
 {
     lua_close(L);
@@ -205,6 +197,48 @@ void LuaScriptEngine::unregister()
 
 //------------------------------------------------------------------------
 //--- Общие функции для взаимодействия с Lua -----------------------------
+//------------------------------------------------------------------------
+void LuaScriptEngine::pushObject(IObjectPtr object)
+{
+    // Убеждаемся, что объект существует.
+    assert( !object.isNull() );
+    // Убеждаемся, что возращаемый класс - величина постоянная.
+    assert( object->getClass() == object->getClass() );
+
+    const IClass* c = object->getClass();
+    if ( !c )
+        return;
+    
+    this->type = LuaScriptEngine::SCRIPTABLE;
+    *reinterpret_cast<IObjectPtr*>(lua_newuserdata(L, sizeof(object))) = object;// стек: [IObject]
+    this->type = LuaScriptEngine::GENERAL;
+
+    if ( luaL_newmetatable(L, ("USS:"+c->getName()).c_str()) )// стек: [IObject mt]
+    {
+#define REGISTER(fn) \
+    lua_pushstring(L, #fn);\
+    lua_pushcfunction(L, LuaScriptEngine::Scriptable::fn);\
+    lua_rawset(L, -3);
+
+        // основные функции
+        REGISTER(__tostring);
+        lua_pushliteral(L, "__gc"); // стек: [IObject mt name]
+        lua_pushcfunction(L, LuaScriptEngine::Scriptable::__GC);// стек: [IObject mt name fn]
+        lua_rawset(L, -3);          // стек: [IObject mt]
+
+        if ( !c->getEvaluators().empty() )
+        {
+            REGISTER(__call);
+        }
+        if ( !c->getFields().empty() || !c->getIndexators().empty())
+        {
+            REGISTER(__index);
+            REGISTER(__newindex);
+        }
+#undef REGISTER
+    }                                // стек: [IObject mt]
+    lua_setmetatable(L, -2);         // стек: [IObject]
+}
 //------------------------------------------------------------------------
 void* LuaScriptEngine::allocateFunction(void *ud, void *ptr, size_t osize, size_t nsize) 
 {
@@ -290,14 +324,7 @@ int LuaScriptEngine::dumper(lua_State* L)
 void LuaScriptEngine::pushObject(lua_State* L, IObject* o)
 {
     assert(o);
-    // стек: [] -> [IObject]
-    *reinterpret_cast<const IObject**>(lua_newuserdata(L, sizeof(o))) = o;
-
-    if ( luaL_newmetatable(L, ("USS_O:"+o->getClass()->toString()).c_str() ) )// стек: [IObject mt]
-    {// В новую таблицу записываем функции доступа к объектам
-        luaL_register(L, NULL, Object::mt);
-    }
-    lua_setmetatable( L, -2 );                 // стек: [IObject]
+    //TODO
 }
 //------------------------------------------------------------------------
 IScriptable* LuaScriptEngine::getScriptable(lua_State *L, int index)
@@ -307,7 +334,7 @@ IScriptable* LuaScriptEngine::getScriptable(lua_State *L, int index)
     if (!p)
         return NULL;
     //TODO Сделать проверку по адресу в памяти!
-    return *static_cast<IScriptable**>(p);
+    return (*static_cast<IObjectPtr*>(p)).get();
 }
 //------------------------------------------------------------------------
 IObject* LuaScriptEngine::getObject(lua_State *L, int index)
@@ -317,26 +344,6 @@ IObject* LuaScriptEngine::getObject(lua_State *L, int index)
     luaL_argcheck(L, o, index, "expected IObject argument");
 
     return o;
-}
-//------------------------------------------------------------------------
-IClass* LuaScriptEngine::getClass(lua_State *L, int index)
-{
-    // стек: [] -> [IClass]
-    IClass* c = static_cast<IClass*>(getScriptable(L, index));
-    luaL_argcheck(L, c, index, "expected IClass argument");
-
-    return c;
-}
-//------------------------------------------------------------------------
-int LuaScriptEngine::__tostring(lua_State *L)
-{
-    IScriptable* s = getScriptable(L, 1);
-    if ( !s )
-        return 0;// Не наш объект оставим в покое
-
-    String str = s->toString();
-    lua_pushlstring( L, str.c_str(), str.size() );
-    return 1;
 }
 //------------------------------------------------------------------------
 // Хелпер для вызова методов
@@ -405,34 +412,6 @@ IMethod* LuaScriptEngine::findMethodTable(lua_State *L, const FieldList& fields,
     }
     return max.second;
 }
-IConstructor* LuaScriptEngine::findConstructorTable(lua_State *L, const ConstructorList& constructors)
-{
-    typedef std::pair<int, IConstructor*> Result;
-    const int t = -1;
-
-    if ( !lua_istable(L, t) )
-        return NULL;
-
-    Result max(0, NULL);
-
-    ConstructorList::const_iterator it = constructors.begin();
-    
-    // Пробегаем по всем методам и для каждого считаем оценку.
-    // Метод с наилучшей оценкой возвращаем как результат.
-    for ( ; it != constructors.end(); ++it )
-    {
-        IConstructor* m = static_cast<IConstructor*>(*it);
-
-        ScriptVarListPtr inArgs = m->inArgs();
-
-        TableChecker tc = std::for_each( inArgs->begin()
-                                       , inArgs->end()
-                                       , TableChecker(L, t) );
-        if ( tc.estimate() > max.first || inArgs->empty() )
-            max = std::make_pair( tc.estimate(), m );
-    }
-    return max.second;
-}
 // Находит наилучший вычислитель, когда аргументы переданы в виде таблицы
 IEvaluator* LuaScriptEngine::findEvaluatorTable(lua_State *L, const EvaluatorList& evaluators)
 {
@@ -464,13 +443,8 @@ IEvaluator* LuaScriptEngine::findEvaluatorTable(lua_State *L, const EvaluatorLis
 }
 
 //------------------------------------------------------------------------
-//--- Class --------------------------------------------------------------
+//--- Метаметоды ---------------------------------------------------------
 //------------------------------------------------------------------------
-#include "LuaClassMetamethods.h"
-
-//------------------------------------------------------------------------
-//--- Object -------------------------------------------------------------
-//------------------------------------------------------------------------
-#include "LuaObjectMetamethods.h"
+#include "LuaScriptableMetamethods.h"
 
 #pragma warning(pop)//C4267

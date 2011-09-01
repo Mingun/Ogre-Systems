@@ -27,8 +27,8 @@ namespace Script {
     public:
         virtual ~ScriptEngine() {}
 
-        virtual void registerModule(IModule* module) = 0;
-        virtual void unregisterModule(IModule* module) = 0;
+        virtual void registerModule(IModulePtr module) = 0;
+        virtual void unregisterModule(IModulePtr module) = 0;
 
         /** Регистрирует указанную фабрику в скриптовом движке.
             После регистрации фабрики скриптабельных объектов, можно будет
@@ -42,8 +42,8 @@ namespace Script {
             будет создать из скрипта, @link registerObject зарегистрируйте@endlink 
             только его и не регистрируйте его фабрику.
         */
-        virtual void registerClass(IClass* clazz) = 0;
-        virtual void unregisterClass(IClass* clazz) = 0;
+        virtual void registerClass(IClassPtr clazz) = 0;
+        virtual void unregisterClass(IClassPtr clazz) = 0;
 
         /** Регистрирует созданный скриптабельный объект в скриптовом движке.
         @param name
@@ -83,8 +83,8 @@ namespace Script {
             ваших плечах лежит ответственность за то, что время жизни объекта
             будет не меньше, чем время жизни скриптового движка.
         */
-        virtual bool registerObject(const String& name, IObject* o, bool bAllowDelete = true) = 0;
-        virtual void unregisterObject(IObject* o) = 0;
+        virtual bool registerObject(const String& name, IObjectPtr o, bool bAllowDelete = true) = 0;
+        virtual void unregisterObject(IObjectPtr o) = 0;
 
         /** Возвращает список расширений (без точки), с которыми себя ассоциирует 
             этот скриптовый движок. Учтите, что присутствие расширения в этом списке
