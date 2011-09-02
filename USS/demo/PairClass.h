@@ -13,7 +13,7 @@ namespace test {
 		{\
 		public:\
 			virtual ScriptVarListPtr inArgs() const;\
-			virtual void eval(IObject* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const;\
+			virtual void eval(IScriptable* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const;\
 			virtual const String& doc() const;\
 		}
 
@@ -34,7 +34,6 @@ namespace test {
         virtual const String& doc() const;
     public:// IScriptable
         virtual String toString() const;
-    public:// IObject
         virtual const IClass* getClass() const;
     public:// IClass
         virtual const String& getName() const;
@@ -48,7 +47,7 @@ namespace test {
 
     class PairClassStatic : public IClass
     {
-        MethodList      mMethods;
+        EvaluatorList      mEvaluators;
     public:
         PairClassStatic();
         virtual ~PairClassStatic();
@@ -56,7 +55,6 @@ namespace test {
         virtual const String& doc() const;
     public:// IScriptable
         virtual String toString() const;
-    public:// IObject
         virtual const IClass* getClass() const;
     public:// IClass
         virtual const String& getName() const;

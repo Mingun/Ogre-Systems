@@ -10,6 +10,7 @@
 #include "OMS/OgreSharedPtr.h"
 #include "USS/Function.h"
 #include "USS/Bridge.h"
+#include "USS/IScriptable.h"
 
 #define USS_TYPEID \
 protected:\
@@ -177,7 +178,7 @@ RegisterVar(Bool, bool, false)
 RegisterVar(Int,  int, 0)
 RegisterVar(Real, double, 0.0)
 RegisterVar(Char, char, 0)
-RegisterVar(Scriptable, IScriptable*, NULL)
+RegisterVar(Scriptable, IScriptablePtr, IScriptablePtr())
 RegisterVar(Iterator, Iterator*, NULL)
 
 class _ScriptExport StringVar : public BaseVar<String> 

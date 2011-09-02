@@ -7,7 +7,7 @@
 #include "USS/USSPrerequisites.h"
 #include "Common/OgreString.h"
 
-#include "USS/IObject.h"
+#include "USS/IScriptable.h"
 #include "USS/Eventable.h"
 
 #include "USS/demo/PairClass.h"
@@ -18,7 +18,7 @@ namespace test {
 	using namespace Script;
 
     template<class T, class C>
-    class ObjectWrapper : public IObject   // Это объект
+    class ObjectWrapper : public IScriptable   // Это объект
     {
     public:
         typedef SharedPtr<T>    ObjectPtr;
@@ -35,7 +35,7 @@ namespace test {
             : mObj( obj )
             , mClass( cls ) {}
 
-    public:// IObject
+    public:// IScriptable
         virtual const IClass* getClass() const { assert( mClass ); return mClass; }
         virtual const String& doc() const { assert( mClass ); return mClass->doc(); }
     };

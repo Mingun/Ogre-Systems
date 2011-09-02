@@ -23,7 +23,7 @@ namespace Script {
             а только указывает на то же самое место в памяти. Под отладчиком все работает,
             как и задумывалось, а без него - крашится.
         */
-        virtual void get(const IObject* object, ScriptVarPtr& propArg) const = 0;
+        virtual void get(const IScriptable* object, ScriptVarPtr& propArg) const = 0;
 
         /**
         @note
@@ -33,7 +33,7 @@ namespace Script {
             а только указывает на то же самое место в памяти. Под отладчиком все работает,
             как и задумывалось, а без него - крашится.
         */
-        virtual void set(IObject* object, const ScriptVarPtr& propArg) = 0;
+        virtual void set(IScriptable* object, const ScriptVarPtr& propArg) = 0;
     };
 }// namespace Script
 

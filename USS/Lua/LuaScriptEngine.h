@@ -7,24 +7,20 @@
 
 #include "USS/ScriptEngine.h"
 
-#include <boost/pool/pool.hpp>
-
 extern "C" {
 struct lua_State;
-struct luaL_Reg;
 }
 using namespace Script;
 
 class LuaScriptEngine : public ScriptEngine
 {
     /// Состояние lua для скриптового движка.
-    lua_State *L;
+    lua_State* L;
     enum AllocatingType 
     { 
         GENERAL
       , SCRIPTABLE
     } type;
-    boost::pool<> pool;
 
     struct Scriptable
     {
@@ -41,7 +37,7 @@ class LuaScriptEngine : public ScriptEngine
         /// Вызывается при попытке записать в поле информацию.
         static int __newindex(lua_State *L);
         /** Метаметод для вычисления объекта как функции.
-            Так как поля объекта тоже являются IObject-объектами,
+            Так как поля объекта тоже являются IScriptable-объектами,
             также вычисляет методы объекта.
         @notes
             Алгоритм:
@@ -49,8 +45,6 @@ class LuaScriptEngine : public ScriptEngine
             -# Перенаправить вызов в метатаблицу метатаблицы объекта.
         */
         static int __call    (lua_State *L);
-        /// Вызывается при сборке IScriptable сборщиком мусора Lua.
-        static int __GC      (lua_State *L);
         /// Метаметод для превращения IScriptable в строку.
         static int __tostring(lua_State *L);
     };
@@ -80,6 +74,7 @@ class LuaScriptEngine : public ScriptEngine
         static int dumper(lua_State* L);
     };
     
+    friend class LuaBridge;
 public:
     LuaScriptEngine();
     virtual ~LuaScriptEngine();
@@ -87,8 +82,8 @@ public:
     virtual void unregisterModule(IModulePtr module);
     virtual void registerClass(IClassPtr clazz);
     virtual void unregisterClass(IClassPtr clazz);
-    virtual bool registerObject(const String& name, IObjectPtr object, bool bAllowDelete = true);
-    virtual void unregisterObject(IObjectPtr object);
+    virtual bool registerObject(const String& name, IScriptablePtr object, bool bAllowDelete = true);
+    virtual void unregisterObject(IScriptablePtr object);
     virtual StringVector extensions() const;
     virtual String version() const;
     virtual String getType() const;
@@ -98,16 +93,22 @@ private:
     virtual void unregister();
     /** Вставляет объект в стек и присваивает ему метатаблицу, регистрируя в
         ней функции, необходимые для его работы.
+    @param L
+        Стек Lua.
+    @param object
+        Помещаемый в стек объект. Объект должен валидным, иначе в отладке
+        сработает assert.
     */
-    void pushObject(IObjectPtr object);
+    void pushObject(const IScriptablePtr& object);
+
+    void init();
 
 private:
     static IMethod* findMethodTable(lua_State *L, const FieldList& fields, const String& name);
     static IEvaluator* findEvaluatorTable(lua_State *L, const EvaluatorList& evaluators);
-    static void pushObject(lua_State* L, IObject* o);
 
-    static IScriptable* getScriptable(lua_State *L, int index);
-    static IObject* getObject(lua_State *L, int index);
+    /// Преобразует  userdata по данному индексу в указатель на IScriptable
+    static IScriptablePtr getScriptable(lua_State *L, int index);
 
 private:
     /** Аллокатор памяти для Lua.
@@ -120,6 +121,7 @@ private:
         Исходный размер блока.
     @param nsize 
         Новый размер блока.
+
     @return
         Указатель на на блок [пере]выделенной памяти или @c NULL, если 
         [пере]выделить память не удалось или в случае освобождения памяти.

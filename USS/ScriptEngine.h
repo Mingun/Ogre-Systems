@@ -62,7 +62,7 @@ namespace Script {
             регистрации объекта.
         @param o
             Существующий (т.е. созданный (обычно) с помощью своей фабрики) 
-            объект #IObject.
+            объект #IScriptable.
         @param bAllowDelete
             Опциональный флаг, позволяющий запретить пользователю удаление
             экземпляра этого объекта. По умолчанию пользователь может удалить
@@ -83,8 +83,8 @@ namespace Script {
             ваших плечах лежит ответственность за то, что время жизни объекта
             будет не меньше, чем время жизни скриптового движка.
         */
-        virtual bool registerObject(const String& name, IObjectPtr o, bool bAllowDelete = true) = 0;
-        virtual void unregisterObject(IObjectPtr o) = 0;
+        virtual bool registerObject(const String& name, IScriptablePtr o, bool bAllowDelete = true) = 0;
+        virtual void unregisterObject(IScriptablePtr o) = 0;
 
         /** Возвращает список расширений (без точки), с которыми себя ассоциирует 
             этот скриптовый движок. Учтите, что присутствие расширения в этом списке
@@ -176,7 +176,7 @@ namespace Script {
             Пример использования:
             @code
             // В одном из методов MyScriptEngine
-            IObject* o = ...
+            IScriptable* o = ...
             IClass* c = o->getClass();
             MyBridge bridge(...);// наследник Bridge
 

@@ -17,7 +17,7 @@ namespace Script {
         virtual void pack(char value) = 0;
         virtual void pack(const String& value) = 0;
         virtual void pack(const Iterator* value) = 0;
-        virtual void pack(const IScriptable* value) = 0;
+        virtual void pack(const IScriptablePtr& value) = 0;
         virtual void pack(const Hash& value) = 0;
         virtual void pack(const Function* value) = 0;
         virtual void pack(const void* value) = 0;
@@ -30,7 +30,7 @@ namespace Script {
         virtual void unpack(char& value) = 0;
         virtual void unpack(String& value) = 0;
         virtual void unpack(Iterator*& value) = 0;
-        virtual void unpack(IScriptable*& value) = 0;
+        virtual void unpack(IScriptablePtr& value) = 0;
         virtual void unpack(Hash& value) = 0;
         virtual void unpack(Function*& value) = 0;
         virtual void unpack(void*& value) = 0;
@@ -44,7 +44,7 @@ namespace Script {
         virtual int check(char value) = 0;
         virtual int check(const String& value) = 0;
         virtual int check(const Iterator* value) = 0;
-        virtual int check(const IScriptable* value) = 0;
+        virtual int check(const IScriptablePtr& value) = 0;
         virtual int check(const Hash& value) = 0;
         virtual int check(const Function* value) = 0;
         virtual int check(const void* value) = 0;

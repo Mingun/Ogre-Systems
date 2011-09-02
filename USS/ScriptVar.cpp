@@ -1,6 +1,6 @@
 
 #include "USS/ScriptVar.h"
-#include "USS/IObject.h"
+#include "USS/IScriptable.h"
 #include <algorithm>
 
 namespace Script {

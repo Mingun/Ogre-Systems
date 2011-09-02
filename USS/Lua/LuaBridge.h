@@ -1,5 +1,5 @@
-#ifndef __LuaBridge_H__
-#define __LuaBridge_H__
+#ifndef __USSLuaBridge_H__
+#define __USSLuaBridge_H__
 
 #pragma once
 #include "Common/OgrePrerequisites.h"
@@ -8,6 +8,7 @@
 #include "USS/ScriptVar.h"
 #include "USS/ScriptVarList.h"
 #include "LuaFunction.h"
+#include "LuaScriptEngine.h"
 
 #if OGRE_COMPILER == OGRE_COMPILER_MSVC
 #   pragma warning(push)
@@ -38,7 +39,8 @@ public:
     virtual void pack(char value)   { char ch[] = {value, 0}; lua_pushstring( L, ch ); }
     virtual void pack(const String& value) { lua_pushlstring( L, value.c_str(), value.size() ); }
     virtual void pack(const Iterator* value) {
-        //LuaScriptEnginePrivate::Iterator::push(L, value);
+        lua_pushnil(L);
+        //LuaScriptEngine::Iterator::push(L, value);
     }
     virtual void pack(const Hash& value) {
         lua_createtable( L, 0, static_cast<int>(value.size()) );
@@ -49,9 +51,20 @@ public:
             lua_rawset( L, -2 );
         }
     }
-    virtual void pack(const IScriptable* value) {}// LuaScriptEnginePrivate::pushScriptable(L, value); }
+    virtual void pack(const IScriptablePtr& value) {
+        // Получаем смещеный на размер указателя указатель.
+        // Там расположен указатель на скриптовый движок.
+        LuaScriptEngine *engine = *static_cast<LuaScriptEngine**>(
+            static_cast<void*>(
+                static_cast<char*>(static_cast<void*>(L)) - sizeof(void*)
+            )
+        );
+        engine->pushObject(value);
+    }
     //FIXME Реализовать pack(const Function* value)!
-    virtual void pack(const Function* value) {  }
+    virtual void pack(const Function* value) {
+        lua_pushnil(L);
+    }
     virtual void pack(const void* value) { lua_pushlightuserdata(L, const_cast<void*>(value)); }
 
     virtual void unpack(bool& value)   { value = static_cast<bool>(lua_toboolean(L, mIndex)); }
@@ -60,10 +73,10 @@ public:
     virtual void unpack(char& value)   { value = lua_tostring (L, mIndex)[0]; }
     virtual void unpack(String& value) { value = lua_tostring (L, mIndex); }
     virtual void unpack(Iterator*& value) {
-        //value = LuaScriptEnginePrivate::Iterator::check(L, mIndex);
+        //value = LuaScriptEngine::Iterator::check(L, mIndex);
     }
-    virtual void unpack(IScriptable*& value) {
-        //value = LuaScriptEnginePrivate::checkScriptable(L, --mIndex);
+    virtual void unpack(IScriptablePtr& value) {
+        value = LuaScriptEngine::getScriptable(L, mIndex);
     }
     virtual void unpack(Hash& value) {
         LuaBridge bridge(L, -1);
@@ -126,10 +139,10 @@ public:
         return 0;
     }
     virtual int check(const Iterator* value) {
-        return 0;//LuaScriptEnginePrivate::Iterator::check(L, ++mIndex);
+        return 0;//LuaScriptEngine::Iterator::check(L, ++mIndex);
     }
-    virtual int check(const IScriptable* value) {
-        return 0;//LuaScriptEnginePrivate::checkScriptable(L, ++mIndex);
+    virtual int check(const IScriptablePtr& value) {
+        return static_cast<int>(LuaScriptEngine::getScriptable(L, mIndex).isNull()) << 1;
     }
     virtual int check(const Hash& value) {
         return lua_istable(L, mIndex) << 1;
@@ -161,4 +174,4 @@ public:
 #   pragma warning(pop)
 #endif
 
-#endif // __LuaBridge_H__
+#endif // __USSLuaBridge_H__

@@ -10,8 +10,8 @@
 // 5. Перенаправить индексацию в метатаблицу (разрешено использование метаметодов).
 int LuaScriptEngine::Scriptable::__index(lua_State *L)
 {
-    // стек: [IObject key]
-    IObject* o = getObject(L, 1);
+    // стек: [IScriptable key]
+    IScriptablePtr o = getScriptable(L, 1);
     const IClass* c = o->getClass();
 
     FieldList fields = c->getFields();
@@ -32,7 +32,7 @@ int LuaScriptEngine::Scriptable::__index(lua_State *L)
             {
                 const IProperty* p = static_cast<const IProperty*>(f);
                 ScriptVarPtr prop = p->propArg();
-                p->get( o, prop );
+                p->get( o.get(), prop );
                 prop->pack( LuaBridge(L) );
                 return 1;
             }
@@ -55,7 +55,7 @@ int LuaScriptEngine::Scriptable::__index(lua_State *L)
         ScriptVarPtr valueArg = i->valueArg();
 
         keyArg->unpack( bridge );
-        i->get( o, keyArg, valueArg );
+        i->get( o.get(), keyArg, valueArg );
 
         valueArg->pack( bridge );
         return 1;
@@ -64,9 +64,9 @@ int LuaScriptEngine::Scriptable::__index(lua_State *L)
     // 5. Перенаправить индексацию в метатаблицу (разрешено использование метаметодов).
     if ( !lua_getmetatable(L, 1) )
         return 0;
-                         // стек: [IObject key mt]
-    lua_pushvalue(L, 2); // стек: [IObject key mt key]
-    lua_gettable(L, -2); // стек: [IObject key mt[key]]
+                         // стек: [IScriptable key mt]
+    lua_pushvalue(L, 2); // стек: [IScriptable key mt key]
+    lua_gettable(L, -2); // стек: [IScriptable key mt[key]]
     return 1;
 }
 
@@ -80,8 +80,8 @@ int LuaScriptEngine::Scriptable::__index(lua_State *L)
 // 3. Перенаправляем индексацию в метатаблицу.
 int LuaScriptEngine::Scriptable::__newindex(lua_State *L)
 {
-    // стек: [IObject key value]
-    IObject *o = getObject(L, 1);
+    // стек: [IScriptable key value]
+    IScriptablePtr o = getScriptable(L, 1);
     const IClass* c = o->getClass();
 
     // 1. Ищем свойство с указанным именем.
@@ -103,7 +103,7 @@ int LuaScriptEngine::Scriptable::__newindex(lua_State *L)
                                , lua_typename(L, lua_type(L, 3))));
 
             propArg->unpack( bridge );
-            p->set( o, propArg );
+            p->set( o.get(), propArg );
             return 0;
         }
     }
@@ -119,7 +119,7 @@ int LuaScriptEngine::Scriptable::__newindex(lua_State *L)
 
         keyArg->unpack( bridge );
         valueArg->unpack( bridge );
-        i->set( o, keyArg, valueArg );
+        i->set( o.get(), keyArg, valueArg );
 
         return 0;
     }
@@ -140,8 +140,8 @@ int LuaScriptEngine::Scriptable::__newindex(lua_State *L)
 // 1. Если объект вызываемый, вызвать его и выйти.
 int LuaScriptEngine::Scriptable::__call(lua_State *L)
 {
-    // стек: [IObject ...]
-    IObject* o = getObject(L, 1);
+    // стек: [IScriptable ...]
+    IScriptablePtr o = getScriptable(L, 1);
     const IClass* c = o->getClass();
 
     EvaluatorList evaluators = c->getEvaluators();
@@ -163,27 +163,18 @@ int LuaScriptEngine::Scriptable::__call(lua_State *L)
     }
 
     ScriptVarListPtr outArgs = e->outArgs();
-    e->eval( o, *inArgs, *outArgs );
+    e->eval( o.get(), *inArgs, *outArgs );
     outArgs->pack( LuaBridge(L) );
     return outArgs->size();
 }
 //------------------------------------------------------------------------
-int LuaScriptEngine::Scriptable::__GC(lua_State *L)
-{
-    // стек: [IObject]
-    TRACE_STACK;
-    //IObject* o = getObject(L, 1);
-    //const IClass* c = o->getClass();
-    return 0;
-}
-//------------------------------------------------------------------------
 int LuaScriptEngine::Scriptable::__tostring(lua_State *L)
 {
-    IScriptable* s = getScriptable(L, 1);
-    if ( !s )
+    IScriptablePtr o = getScriptable(L, 1);
+    if ( o.isNull() )
         return 0;// Не наш объект оставим в покое
 
-    String str = s->toString();
+    String str = o->toString();
     lua_pushlstring( L, str.c_str(), str.size() );
     return 1;
 }

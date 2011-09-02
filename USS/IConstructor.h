@@ -17,7 +17,11 @@ namespace Script {
         virtual TYPE getType() const { return Constructor; }
         virtual const String& getName() const { return StringUtil::BLANK; }
 
-        virtual ScriptVarListPtr outArgs() const { return ScriptVarListPtr(new ScriptableVar()); }
+        virtual ScriptVarListPtr outArgs() const {
+            ScriptVarList *list = new ScriptVarList();
+            list->add(new ScriptableVar());
+            return ScriptVarListPtr(list); 
+        }
     };
 }// namespace Script
 

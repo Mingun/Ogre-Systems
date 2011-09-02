@@ -61,7 +61,6 @@ namespace Script {
     
     class IDocumentable;
     class IScriptable;
-    class IObject;
     class Class;
     class IClass;
     class IField;
@@ -113,8 +112,8 @@ namespace Script {
     typedef vector<IIndexator*>::type                 IndexatorList;
 
     typedef SharedPtr<ScriptEngine> ScriptEnginePtr;
+    typedef SharedPtr<IScriptable>  IScriptablePtr;
     typedef SharedPtr<IClass>       IClassPtr;
-    typedef SharedPtr<IObject>      IObjectPtr;
     typedef SharedPtr<IModule>      IModulePtr;
 
 } // namespace Script

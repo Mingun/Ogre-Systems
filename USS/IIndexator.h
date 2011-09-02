@@ -37,7 +37,7 @@ namespace Script {
             а только указывает на то же самое место в памяти. Под отладчиком все работает,
             как и задумывалось, а без него - крашится.
         */
-        virtual void get(const IObject* object, const ScriptVarPtr& keyArg, ScriptVarPtr& valueArg) const = 0;
+        virtual void get(const IScriptable* object, const ScriptVarPtr& keyArg, ScriptVarPtr& valueArg) const = 0;
 
         /** Записывает по индексу @c keyArg указанного объекта @c context @c valueArg.
             Скриптовый движок гарантирует, что типы параметров соответствуют 
@@ -56,7 +56,7 @@ namespace Script {
             а только указывает на то же самое место в памяти. Под отладчиком все работает,
             как и задумывалось, а без него - крашится.
         */
-        virtual void set(IObject* object, const ScriptVarPtr& keyArg, const ScriptVarPtr& valueArg) = 0;
+        virtual void set(IScriptable* object, const ScriptVarPtr& keyArg, const ScriptVarPtr& valueArg) = 0;
     };
 }// namespace Script
 

@@ -15,6 +15,8 @@ namespace Script {
         virtual ~IScriptable() {}
         /// @return Строковое представление объекта.
         virtual String toString() const = 0;
+        /// @return Класс объекта, которым является этот объект.
+        virtual const IClass* getClass() const = 0;
     };
 }// namespace Script
 

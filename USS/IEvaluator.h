@@ -36,7 +36,7 @@ namespace Script {
         @param outArgs
             Выходные аргументы, которые нужно заполнить вычисленными значениями.
         */
-        virtual void eval(IObject* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const = 0;
+        virtual void eval(IScriptable* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const = 0;
     };
 }// namespace Script
 

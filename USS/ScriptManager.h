@@ -38,7 +38,7 @@ class _ScriptExport ScriptManager : public Singleton<ScriptManager>, public Scri
 {
 protected:
     typedef map<String, IClassPtr>::type       ClassList;
-    typedef map<String, IObjectPtr>::type      ObjectList;
+    typedef map<String, IScriptablePtr>::type  ObjectList;
     typedef map<String, ScriptEnginePtr>::type ScriptEngineList;
     typedef map<String, ScriptEnginePtr>::type MapExtensionsList;
 
@@ -67,9 +67,9 @@ public:
     void unregisterClass(const String& name);
     IClassPtr getClass(const String& name);
 
-    void registerObject(const String& name, IObjectPtr object, bool bAllowDelete = true);
+    void registerObject(const String& name, IScriptablePtr object, bool bAllowDelete = true);
     void unregisterObject(const String& name);
-    IObjectPtr getObject(const String& name);
+    IScriptablePtr getObject(const String& name);
 
     void registerScriptEngine(ScriptEnginePtr engine);
     void unregisterScriptEngine(ScriptEnginePtr engine);

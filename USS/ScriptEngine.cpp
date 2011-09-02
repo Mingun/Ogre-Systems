@@ -21,7 +21,7 @@ namespace Script {
         
         virtual ScriptVarListPtr inArgs()  const { return ScriptVarListPtr(); }
         virtual ScriptVarListPtr outArgs() const { return ScriptVarListPtr(); }
-        virtual void eval(IObject* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const {}
+        virtual void eval(IScriptable* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const {}
     };
 
     class Checker : public std::unary_function<const ScriptVar*, void>

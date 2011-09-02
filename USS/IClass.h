@@ -6,11 +6,11 @@
 #include "USS/USSPrerequisites.h"
 
 #include "Common/OgreString.h"
-#include "USS/IObject.h"
+#include "USS/IScriptable.h"
 
 namespace Script {
 
-    class _ScriptExport IClass : public IObject
+    class _ScriptExport IClass : public IScriptable
     {
     public:
         virtual ~IClass() {}

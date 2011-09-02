@@ -11,7 +11,7 @@
 
 #include "USS/IModule.h"
 #include "USS/IClass.h"
-#include "USS/IObject.h"
+#include "USS/IScriptable.h"
 #include "USS/IField.h"
 #include "USS/IProperty.h"
 #include "USS/IMethod.h"
@@ -31,28 +31,17 @@ extern "C" {
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
-// для sizeof(Udata)
-#include "lobject.h"
 }
 #include "LuaUtilityClasses.h"
 
-#include <boost/utility/addressof.hpp>
 //conversion from 'size_t' to 'int', possible loss of data
 #pragma warning(push)
 #pragma warning(disable:4267)
 
 LuaScriptEngine::LuaScriptEngine()
     : type( GENERAL )
-    // размер объекта userdata + накладные расходы Lua
-    , pool( sizeof(void*) + sizeof(Udata) )
 {
-    L = lua_newstate(LuaScriptEngine::allocateFunction, this);
-    lua_atpanic(L, LuaScriptEngine::panicFunction);
-    // регистрируем стандартные библиотеки
-    luaL_openlibs(L);
-
-    //TODO зарегистрировать объект ScriptEngine, предоставляющем информацию о движке
-    //registerObject( "ScriptEngine", new ScriptEngineInfo(), false );
+    init();
 }
 //------------------------------------------------------------------------
 LuaScriptEngine::~LuaScriptEngine()
@@ -77,25 +66,23 @@ void LuaScriptEngine::unregisterModule(IModulePtr module)
 void LuaScriptEngine::registerClass(IClassPtr clazz) 
 {//FIXME при замене объекта метатаблица не поменяется
     
+    assert( clazz->getClass()->getClass() == NULL );
     registerObject(clazz->getName(), clazz);
 }
 //------------------------------------------------------------------------
 void LuaScriptEngine::unregisterClass(IClassPtr clazz)
 {
-    //TODO
+    unregisterObject(clazz);
 }
 //------------------------------------------------------------------------
-bool LuaScriptEngine::registerObject(const String& name, IObjectPtr o, bool bAllowDelete)
-{                                                   // стек: []
-    lua_pushvalue(L, LUA_GLOBALSINDEX);             // стек: [_G]
-    lua_pushlstring(L, name.c_str(), name.size());  // стек: [_G name]
-    pushObject(o);                                  // стек: [_G name IObject]
-    lua_rawset(L, -3);                              // стек: [_G]
-    lua_pop(L, 1);                                  // стек: []
+bool LuaScriptEngine::registerObject(const String& name, IScriptablePtr o, bool bAllowDelete)
+{                                   // стек: []
+    pushObject(o);                  // стек: [IScriptable]
+    lua_setglobal(L, name.c_str()); // стек: []
     return true;
 }
 //------------------------------------------------------------------------
-void LuaScriptEngine::unregisterObject(IObjectPtr o)
+void LuaScriptEngine::unregisterObject(IScriptablePtr o)
 {
     //TODO
 }
@@ -195,72 +182,50 @@ void LuaScriptEngine::unregister()
 //                    Д Е Т А Л И   Р Е А Л И З А Ц И И
 //========================================================================
 
+void LuaScriptEngine::init() 
+{
+    L = lua_newstate(LuaScriptEngine::allocateFunction, this);
+    // Получаем смещеный на размер указателя указатель.
+    // Там расположен указатель на скриптовый движок.
+    void *p = static_cast<void*>(
+        static_cast<char*>(static_cast<void*>(L)) - sizeof(void*)
+    );
+    *static_cast<LuaScriptEngine**>(p) = this;
+
+    lua_atpanic(L, LuaScriptEngine::panicFunction);
+    // регистрируем стандартные библиотеки
+    luaL_openlibs(L);
+    //TODO зарегистрировать объект ScriptEngine, предоставляющем информацию о движке
+    //registerObject( "ScriptEngine", new ScriptEngineInfo(), false );
+}
+
 //------------------------------------------------------------------------
 //--- Общие функции для взаимодействия с Lua -----------------------------
 //------------------------------------------------------------------------
-void LuaScriptEngine::pushObject(IObjectPtr object)
-{
-    // Убеждаемся, что объект существует.
-    assert( !object.isNull() );
-    // Убеждаемся, что возращаемый класс - величина постоянная.
-    assert( object->getClass() == object->getClass() );
-
-    const IClass* c = object->getClass();
-    if ( !c )
-        return;
-    
-    this->type = LuaScriptEngine::SCRIPTABLE;
-    *reinterpret_cast<IObjectPtr*>(lua_newuserdata(L, sizeof(object))) = object;// стек: [IObject]
-    this->type = LuaScriptEngine::GENERAL;
-
-    if ( luaL_newmetatable(L, ("USS:"+c->getName()).c_str()) )// стек: [IObject mt]
-    {
-#define REGISTER(fn) \
-    lua_pushstring(L, #fn);\
-    lua_pushcfunction(L, LuaScriptEngine::Scriptable::fn);\
-    lua_rawset(L, -3);
-
-        // основные функции
-        REGISTER(__tostring);
-        lua_pushliteral(L, "__gc"); // стек: [IObject mt name]
-        lua_pushcfunction(L, LuaScriptEngine::Scriptable::__GC);// стек: [IObject mt name fn]
-        lua_rawset(L, -3);          // стек: [IObject mt]
-
-        if ( !c->getEvaluators().empty() )
-        {
-            REGISTER(__call);
-        }
-        if ( !c->getFields().empty() || !c->getIndexators().empty())
-        {
-            REGISTER(__index);
-            REGISTER(__newindex);
-        }
-#undef REGISTER
-    }                                // стек: [IObject mt]
-    lua_setmetatable(L, -2);         // стек: [IObject]
-}
 //------------------------------------------------------------------------
 void* LuaScriptEngine::allocateFunction(void *ud, void *ptr, size_t osize, size_t nsize) 
 {
     LuaScriptEngine* this_ = static_cast<LuaScriptEngine*>(ud);
     (void)osize;
-
-    if ( this_->type == LuaScriptEngine::SCRIPTABLE )
-    {// Выделение памяти из пула.
+//TODO Размещать объекты системы в собственном пуле.
+    //FIXME Найте наши объекты и вызвать их деструктор.
+    if (this_->type == LuaScriptEngine::SCRIPTABLE) {
         if (nsize == 0) {
-            assert( this_->pool.is_from(ptr) );
-            this_->pool.free(ptr);
+            static_cast<IScriptablePtr*>(ptr)->~SharedPtr<IScriptable>();
+            free(ptr);
             return NULL;
         }
-        assert( nsize == sizeof(void*) );
-        return this_->pool.malloc();
+        else
+            return realloc(ptr, nsize);
+
+    } else {
+        if (nsize == 0) {
+            free(ptr);
+            return NULL;
+        }
+        else
+            return realloc(ptr, nsize);
     }
-    if (nsize == 0) {
-        free(ptr);
-        return NULL;
-    }
-    else
-        return realloc(ptr, nsize);
 }
 //------------------------------------------------------------------------
 int LuaScriptEngine::panicFunction(lua_State *L)
@@ -321,29 +286,58 @@ int LuaScriptEngine::dumper(lua_State* L)
     return 0;
 }
 //------------------------------------------------------------------------
-void LuaScriptEngine::pushObject(lua_State* L, IObject* o)
+void LuaScriptEngine::pushObject(const IScriptablePtr& object)
 {
-    assert(o);
-    //TODO
+    // Убеждаемся, что объект существует.
+    assert( !object.isNull() );
+    // Убеждаемся, что возращаемый класс - величина постоянная.
+    assert( object->getClass() == object->getClass() );
+
+    const IClass* c = object->getClass();
+    if ( !c )
+        return;
+    
+    this->type = LuaScriptEngine::SCRIPTABLE;
+    new (lua_newuserdata(L, sizeof(object))) IScriptablePtr(object);// стек: [IScriptable]
+    this->type = LuaScriptEngine::GENERAL;
+
+    if ( luaL_newmetatable(L, ("USS:"+c->getName()).c_str()) )// стек: [IScriptable mt]
+    {
+#if OGRE_DEBUG_MODE 
+        lua_pushliteral(L, "__mtname");
+        lua_pushstring(L, ("USS:"+c->getName()).c_str());
+        lua_rawset(L, -3);
+#endif
+#define REGISTER(fn) \
+    lua_pushstring(L, #fn);\
+    lua_pushcfunction(L, LuaScriptEngine::Scriptable::fn);\
+    lua_rawset(L, -3);
+
+        // основные функции
+        REGISTER(__tostring);
+
+        if ( !c->getEvaluators().empty() )
+        {
+            REGISTER(__call);
+        }
+        if ( !c->getFields().empty() || !c->getIndexators().empty())
+        {
+            REGISTER(__index);
+            REGISTER(__newindex);
+        }
+#undef REGISTER
+    }                                // стек: [IScriptable mt]
+    lua_setmetatable(L, -2);         // стек: [IScriptable]
 }
 //------------------------------------------------------------------------
-IScriptable* LuaScriptEngine::getScriptable(lua_State *L, int index)
+IScriptablePtr LuaScriptEngine::getScriptable(lua_State *L, int index)
 {
     // стек: [] -> [IScriptable]
     void* p = lua_touserdata(L, index);
     if (!p)
-        return NULL;
+        return IScriptablePtr();
     //TODO Сделать проверку по адресу в памяти!
-    return (*static_cast<IObjectPtr*>(p)).get();
-}
-//------------------------------------------------------------------------
-IObject* LuaScriptEngine::getObject(lua_State *L, int index)
-{
-    // стек: [] -> [IObject]
-    IObject* o = static_cast<IObject*>(getScriptable(L, index));
-    luaL_argcheck(L, o, index, "expected IObject argument");
-
-    return o;
+    return *static_cast<IScriptablePtr*>(p);
 }
 //------------------------------------------------------------------------
 // Хелпер для вызова методов
@@ -352,7 +346,7 @@ int LuaScriptEngine::accessor(lua_State* L)
     IClass* c = reinterpret_cast<IClass*>(lua_touserdata(L, lua_upvalueindex(1)));
     String key = lua_tostring(L, lua_upvalueindex(2));
     //TODO Добавить проверку при получении объекта
-    IObject* o = getObject(L, 1);
+    IScriptablePtr o = getScriptable(L, 1);
 
     luaL_argcheck(L, o->getClass() == c, 1, ("expected class "+c->toString() + ", got "+o->getClass()->toString()).c_str());
 
@@ -377,7 +371,7 @@ int LuaScriptEngine::accessor(lua_State* L)
 
     ScriptVarListPtr outArgs = m->outArgs();
 
-    m->eval( o, *inArgs, *outArgs );
+    m->eval( o.get(), *inArgs, *outArgs );
     outArgs->pack( LuaBridge(L) );
     return outArgs->size();
 }

@@ -4,7 +4,7 @@
 #include "USS/ScriptManager.h"
 #include "USS/ScriptEngine.h"
 #include "USS/IClass.h"
-#include "USS/IObject.h"
+#include "USS/IScriptable.h"
 #include "USS/IModule.h"
 
 namespace Ogre {
@@ -116,7 +116,7 @@ namespace Script {
         return it->second;
     }
     //-----------------------------------------------------------------------
-    void ScriptManager::registerObject(const String& name, IObjectPtr o, bool bAllowDelete)
+    void ScriptManager::registerObject(const String& name, IScriptablePtr o, bool bAllowDelete)
     {
         OGRE_LOCK_AUTO_MUTEX
         {
@@ -141,11 +141,11 @@ namespace Script {
         }
     }
     //-----------------------------------------------------------------------
-    IObjectPtr ScriptManager::getObject(const String& name)
+    IScriptablePtr ScriptManager::getObject(const String& name)
     {
         //OGRE_LOCK_AUTO_MUTEX
         OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "", "ScriptManager::getObject");
-        return IObjectPtr();
+        return IScriptablePtr();
     }
     //-----------------------------------------------------------------------
     void ScriptManager::registerScriptEngine(ScriptEnginePtr engine)

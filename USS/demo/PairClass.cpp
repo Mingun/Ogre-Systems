@@ -37,7 +37,7 @@ namespace test {
             args->add(new StringVar());
             return args;
         }
-        virtual void eval(IObject* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const {
+        virtual void eval(IScriptable* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const {
             PairObject* o = static_cast<PairObject*>(object);
             static_cast<StringVar*>(outArgs[0])->value() = o->key();
         }
@@ -60,7 +60,7 @@ namespace test {
             args->add(new IntVar());
             return args;
         }
-        virtual void eval(IObject* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const {
+        virtual void eval(IScriptable* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const {
             PairObject* o = static_cast<PairObject*>(object);
             static_cast<IntVar*>(outArgs[0])->value() = o->value();
         }
@@ -85,7 +85,7 @@ namespace test {
         virtual ScriptVarListPtr outArgs() const {
             return ScriptVarListPtr(new ScriptVarList());
         }
-        virtual void eval(IObject* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const {
+        virtual void eval(IScriptable* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const {
             PairObject* o = static_cast<PairObject*>(object);
             o->setKey( static_cast<StringVar*>(inArgs[0])->value() );
         }
@@ -109,7 +109,7 @@ namespace test {
         virtual ScriptVarListPtr outArgs() const {
             return ScriptVarListPtr(new ScriptVarList());
         }
-        virtual void eval(IObject* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const {
+        virtual void eval(IScriptable* object, const ScriptVarList& inArgs, ScriptVarList& outArgs) const {
             PairObject* o = static_cast<PairObject*>(object);
             o->setValue( static_cast<IntVar*>(inArgs[0])->value() );
         }
@@ -127,11 +127,11 @@ namespace test {
         virtual ScriptVarPtr propArg() const {
             return ScriptVarPtr(new StringVar());
         }
-        virtual void get(const IObject* object, ScriptVarPtr& propArg) const {
+        virtual void get(const IScriptable* object, ScriptVarPtr& propArg) const {
             const PairObject* o = static_cast<const PairObject*>(object);
             static_cast<StringVar&>(*propArg).value() = o->key();
         }
-        virtual void set(IObject* object, const ScriptVarPtr& propArg) {
+        virtual void set(IScriptable* object, const ScriptVarPtr& propArg) {
             PairObject* o = static_cast<PairObject*>(object);
             o->setKey( static_cast<const StringVar&>(*propArg).value() );
         }
@@ -149,11 +149,11 @@ namespace test {
         virtual ScriptVarPtr propArg() const {
             return ScriptVarPtr(new IntVar());
         }
-        virtual void get(const IObject* obj, ScriptVarPtr& propArg) const {
+        virtual void get(const IScriptable* obj, ScriptVarPtr& propArg) const {
             const PairObject* o = static_cast<const PairObject*>(obj);
             static_cast<IntVar&>(*propArg).value() = o->value();
         }
-        virtual void set(IObject* obj, const ScriptVarPtr& propArg) {
+        virtual void set(IScriptable* obj, const ScriptVarPtr& propArg) {
             PairObject* o = static_cast<PairObject*>(obj);
             o->setValue( static_cast<const IntVar&>(*propArg).value() );
         }
@@ -171,8 +171,8 @@ namespace test {
         virtual ScriptVarPtr propArg() const {
             return ScriptVarPtr(new FunctionVar());
         }
-        virtual void get(const IObject* obj, ScriptVarPtr& propArg) const {}
-        virtual void set(IObject* obj, const ScriptVarPtr& propArg) {
+        virtual void get(const IScriptable* obj, ScriptVarPtr& propArg) const {}
+        virtual void set(IScriptable* obj, const ScriptVarPtr& propArg) {
             PairObject* o = static_cast<PairObject*>(obj);
             o->addEventHandler( "OnChange", static_cast<const FunctionVar&>(*propArg).value() );
         }
@@ -204,7 +204,7 @@ public:
             return ScriptVarPtr(new StringVar());
             //return ScriptVarPtr(new IteratorVar());
         }
-        virtual void get(const IObject* object, const ScriptVarPtr& keyArg, ScriptVarPtr& valueArg) const {
+        virtual void get(const IScriptable* object, const ScriptVarPtr& keyArg, ScriptVarPtr& valueArg) const {
             const PairObject* o = static_cast<const PairObject*>(object);
             const IntVar& iVar = static_cast<const IntVar&>(*keyArg);
             // пример замены типа "на месте"
@@ -223,7 +223,7 @@ public:
 
             //itVar.value() = new IntIterator(iVar.value());
         }
-        virtual void set(IObject* object, const ScriptVarPtr& keyArg, const ScriptVarPtr& valueArg) {
+        virtual void set(IScriptable* object, const ScriptVarPtr& keyArg, const ScriptVarPtr& valueArg) {
             
         }
     public:// IDocumentable
@@ -267,7 +267,7 @@ public:
 
     String PairClass::toString() const
     {
-        return "Pair";
+        return "class Pair";
     }
 
     const String& PairClass::getName() const
@@ -311,11 +311,11 @@ ScriptVarListPtr PairClass::C0::inArgs() const
 {
     return ScriptVarListPtr(new ScriptVarList());
 }
-void PairClass::C0::eval(IObject* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
+void PairClass::C0::eval(IScriptable* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
 {
-    static_cast<ScriptableVar*>(outArgs[0])->value() = new PairObject(
+    static_cast<ScriptableVar*>(outArgs[0])->value().bind(new PairObject(
         static_cast<PairClass*>(o)
-    );
+    ));
 }
 const String&  PairClass::C0::doc() const
 {
@@ -329,12 +329,12 @@ ScriptVarListPtr PairClass::C1::inArgs() const
     args->add( new StringVar("key") );
     return args;
 }
-void PairClass::C1::eval(IObject* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
+void PairClass::C1::eval(IScriptable* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
 {
-    static_cast<ScriptableVar*>(outArgs[0])->value() = new PairObject(
+    static_cast<ScriptableVar*>(outArgs[0])->value().bind(new PairObject(
         static_cast<StringVar*>(inArgs[0])
       , static_cast<PairClass*>(o)
-    );
+    ));
 }
 const String&  PairClass::C1::doc() const
 {
@@ -349,13 +349,13 @@ ScriptVarListPtr PairClass::C2::inArgs() const
     args->add( new IntVar("value") );
     return args;
 }
-void PairClass::C2::eval(IObject* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
+void PairClass::C2::eval(IScriptable* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
 {
-    static_cast<ScriptableVar*>(outArgs[0])->value() = new PairObject(
+    static_cast<ScriptableVar*>(outArgs[0])->value().bind(new PairObject(
         static_cast<StringVar*>(inArgs[0])
       , static_cast<IntVar*>(inArgs[1])
       , static_cast<PairClass*>(o)
-    );
+    ));
 }
 const String&  PairClass::C2::doc() const
 {
@@ -371,14 +371,14 @@ ScriptVarListPtr PairClass::C3::inArgs() const
     args->add( new FunctionVar("OnChange") );
     return args;
 }
-void PairClass::C3::eval(IObject* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
+void PairClass::C3::eval(IScriptable* o, const ScriptVarList& inArgs, ScriptVarList& outArgs) const
 {
-    static_cast<ScriptableVar*>(outArgs[0])->value() = new PairObject(
+    static_cast<ScriptableVar*>(outArgs[0])->value().bind(new PairObject(
         static_cast<StringVar*>(inArgs[0])
       , static_cast<IntVar*>(inArgs[1])
       , static_cast<FunctionVar*>(inArgs[2])
       , static_cast<PairClass*>(o)
-    );
+    ));
 }
 const String&  PairClass::C3::doc() const
 {
@@ -388,17 +388,17 @@ const String&  PairClass::C3::doc() const
 //------------------------------------------------------------------------
     PairClassStatic::PairClassStatic() 
     {
-        mMethods.insert(new PairClass::C0());
-        mMethods.insert(new PairClass::C1());
-        mMethods.insert(new PairClass::C2());
-        mMethods.insert(new PairClass::C3());
+        mEvaluators.push_back(new PairClass::C0());
+        mEvaluators.push_back(new PairClass::C1());
+        mEvaluators.push_back(new PairClass::C2());
+        mEvaluators.push_back(new PairClass::C3());
     }
 
     PairClassStatic::~PairClassStatic()
     {
-        std::for_each( mMethods.begin(), mMethods.end(), Deleter() );
+        std::for_each( mEvaluators.begin(), mEvaluators.end(), Deleter() );
 
-        mMethods.clear();
+        mEvaluators.clear();
     }
 
     const String& PairClassStatic::doc() const
@@ -424,13 +424,11 @@ const String&  PairClass::C3::doc() const
 
     FieldList PairClassStatic::getFields() const
     {
-        FieldList result;
-        result.insert( mMethods.begin(), mMethods.end() );
-        return result;
+        return FieldList();
     }
     MethodList PairClassStatic::getMethods() const
     {
-        return mMethods;
+        return MethodList();
     }
     PropertyList PairClassStatic::getProperties() const
     {
@@ -438,7 +436,7 @@ const String&  PairClass::C3::doc() const
     }
     EvaluatorList PairClassStatic::getEvaluators() const
     {
-        return EvaluatorList();
+        return mEvaluators;
     }
     IndexatorList PairClassStatic::getIndexators() const
     {
