@@ -59,13 +59,15 @@ LuaFunction::~LuaFunction()
 void LuaFunction::eval(const ScriptVarList& inArgs, ScriptVarList& outArgs) const 
 {
     // стек: []
-    lua_rawgeti( L, LUA_REGISTRYINDEX, mIndex ); // стек: [func]
+    lua_rawgeti( L, LUA_REGISTRYINDEX, mIndex );    // стек: [func]
     assert( lua_isfunction(L, -1) );
 
-    inArgs.pack( LuaBridge(L) );         // стек: [func {inArgs}]
-    lua_call( L, inArgs.size(), outArgs.size() );// стек: [{outArgs}]
-    outArgs.unpack( LuaBridge(L, 1) );      // стек: [{outArgs}]
+    inArgs.pack( LuaBridge(L) );                    // стек: [func {inArgs}]
+    lua_call( L, inArgs.size(), outArgs.size() );   // стек: [{outArgs}]
+    outArgs.unpack( LuaBridge(L, 1) );              // стек: [{outArgs}]
     lua_pop( L, static_cast<int>(outArgs.size()) ); // стек: []
 }
-#if 
-#pragma warning(pop)
+// 'argument' : conversion from 'size_t' to 'int', possible loss of data
+#if OGRE_COMPILER == OGRE_COMPILER_MSVC
+#   pragma warning(pop)
+#endif

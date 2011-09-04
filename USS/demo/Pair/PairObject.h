@@ -10,8 +10,8 @@
 #include "USS/IScriptable.h"
 #include "USS/Eventable.h"
 
-#include "USS/demo/PairClass.h"
-#include "USS/demo/Pair.h"
+#include "PairClass.h"
+#include "Pair.h"
 
 namespace test {
 	using namespace Ogre;

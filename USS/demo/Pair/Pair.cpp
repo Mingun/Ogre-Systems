@@ -1,6 +1,6 @@
 
 #include "OLS/OgreLogManager.h"
-#include "USS/demo/Pair.h"
+#include "Pair.h"
 
 namespace test {
     using namespace Ogre;

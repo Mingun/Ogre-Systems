@@ -113,11 +113,15 @@ int LuaScriptEngine::Scriptable::__newindex(lua_State *L)
     // Если найден, присваиваем по индексу и выходим.
     if ( i )
     {
-        LuaBridge bridge(L);
+        LuaBridge bridge(L, 2);
         ScriptVarPtr keyArg = i->keyArg();
         ScriptVarPtr valueArg = i->valueArg();
 
+ScriptVar *key = keyArg.get();
+ScriptVar *value = valueArg.get();
+
         keyArg->unpack( bridge );
+        bridge.next();
         valueArg->unpack( bridge );
         i->set( o.get(), keyArg, valueArg );
 

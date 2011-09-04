@@ -6,8 +6,8 @@
 #include "USS/IProperty.h"
 #include "USS/IIndexator.h"
 
-#include "USS/demo/Pair.h"
-#include "USS/demo/PairObject.h"
+#include "Pair.h"
+#include "PairObject.h"
 
 namespace test {
     struct Deleter
@@ -224,7 +224,14 @@ public:
             //itVar.value() = new IntIterator(iVar.value());
         }
         virtual void set(IScriptable* object, const ScriptVarPtr& keyArg, const ScriptVarPtr& valueArg) {
-            
+            PairObject* o = static_cast<PairObject*>(object);
+            const IntVar& iVar = static_cast<const IntVar&>(*keyArg);
+            if ( iVar.value() == 1 )
+            {
+                if ( valueArg->to<StringVar>() )
+                    o->setKey( valueArg->to<StringVar>()->value() );
+                return;
+            }
         }
     public:// IDocumentable
         virtual const String& doc() const

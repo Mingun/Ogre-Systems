@@ -67,8 +67,19 @@ public:
     virtual void unpack(bool& value)   { value = static_cast<bool>(lua_toboolean(L, mIndex)); }
     virtual void unpack(int& value)    { value = static_cast<int >(lua_tointeger(L, mIndex)); }
     virtual void unpack(double& value) { value = lua_tonumber (L, mIndex); }
-    virtual void unpack(char& value)   { value = lua_tostring (L, mIndex)[0]; }
-    virtual void unpack(String& value) { value = lua_tostring (L, mIndex); }
+    virtual void unpack(char& value)   { 
+        const char* val = lua_tostring(L, mIndex);
+        if (val) value = val[0]; 
+        else value = 0;
+        //value = lua_tostring (L, mIndex)[0]; 
+    }
+    virtual void unpack(String& value) { 
+        // Если вдруг пришла не строка, lua_tolstring вернет NULL
+        size_t len = 0;
+        const char* val = lua_tolstring (L, mIndex, &len);
+        if (val) value = String(val, val+len); 
+        else value = StringUtil::BLANK;
+    }
     virtual void unpack(Iterator*& value) {
         //value = LuaScriptEngine::Iterator::check(L, mIndex);
     }
