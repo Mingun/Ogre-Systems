@@ -37,7 +37,7 @@ namespace Script {
 
         for( ScriptEngineList::iterator it = mScriptEngines.begin(); it != mScriptEngines.end(); ++it )
         {
-            it->second->unregister();
+            it->second->shutdown();
         }
         mScriptEngines.clear();
         mClasses.clear();
@@ -123,14 +123,10 @@ namespace Script {
             ObjectList::const_iterator it = mObjects.find(name);
             if ( it != mObjects.end() )
             {
-                WARNING("Scriptable object named '" + name + 
+                WARNING("Scriptable object '" + name + 
                         "' already exist and will replace.");
-                //TODO удаляем предыдущий объект
-                /*ScriptEngineList::iterator seIt = mScriptEngines.begin();
-                for ( ; seIt != mScriptEngines.end(); ++seIt )
-                {
-                    seIt->second->unregisterObject( name );
-                }*/
+                // удаляем предыдущий объект
+                unregisterObject( name );
             }
             mObjects.insert( ObjectList::value_type(name, o) );
         }
@@ -139,6 +135,28 @@ namespace Script {
         {
             it->second->registerObject( name, o, bAllowDelete );
         }
+        LOG("Scriptable object '" + name + "' (class " + o->getClass()->getName() + ") registered.");
+    }
+    //-----------------------------------------------------------------------
+    void ScriptManager::unregisterObject(const String& name)
+    {
+        OGRE_LOCK_AUTO_MUTEX
+        ObjectList::iterator it = mObjects.find(name);
+        if ( it == mObjects.end() )
+        {
+            WARNING("Scriptable object '" + name + "' not found.");
+            return;
+        }
+        ScriptEngineList::iterator seIt = mScriptEngines.begin();
+        for ( ; seIt != mScriptEngines.end(); ++seIt )
+        {
+            seIt->second->unregisterObject( it->second );
+        }
+        StringStream ss;
+        ss << "Scriptable object '" << name << "' (class " 
+           << it->second->getClass()->getName() << ") unregistered.";
+        mObjects.erase( it );
+        LOG(ss.str());
     }
     //-----------------------------------------------------------------------
     IScriptablePtr ScriptManager::getObject(const String& name)
@@ -157,8 +175,7 @@ namespace Script {
         {
             WARNING("Script engine named '" + name + 
                     "' already exist and will replace.");
-            //WARNING(tr("Script engine named %1 already exist and will replace.").arg(name)
-            //		 , "ScriptManager::registerScriptEngine");
+            unregisterScriptEngine(it->second);
         }
         mScriptEngines.insert( ScriptEngineList::value_type(name, engine) );
         // Регистрируемся в списках расширений.
@@ -171,12 +188,12 @@ namespace Script {
                 if ( i != mMapExtensions.end() ) 
                 {
                     if ( mMapExtensionsPolicy == MEP_REPLACE_ALL )
-                        LOG("Conflict extension '" + *it + "', already used by '" + 
+                        WARNING("Conflict extension '" + *it + "', already used by '" + 
                             i->second->getType() + "' script engine. Now used '" +
                             engine->getType() + "' script engine.");
                     else
                     {
-                        LOG("Conflict extension '" + *it + "', already used by '" + 
+                        WARNING("Conflict extension '" + *it + "', already used by '" + 
                             i->second->getType() + "' script engine. No change.");
                         continue;
                     }
@@ -184,10 +201,11 @@ namespace Script {
                 mMapExtensions.insert( MapExtensionsList::value_type(*it, engine) );
             }
         }
-        //LOG( "Script engine %1 registered." );
-        LOG( "Script engine " + name + " registered." );
+        engine->init();
+        //LOG( "Script engine '%1' registered." );
+        LOG( "Script engine '" + name + "' registered." );
         {
-            // Уведомляем новый скриптовый движок о фабриках объектов
+            // Уведомляем новый скриптовый движок о классах
             ClassList::iterator it;
             for ( it = mClasses.begin(); it != mClasses.end(); ++it )
             {
@@ -216,10 +234,10 @@ namespace Script {
             //		 , "ScriptManager::unregisterScriptEngine");
             return;
         }
-        it->second->unregister();
+        it->second->shutdown();
         mScriptEngines.erase( it );
-        //LOG( "Script engine %1 unregistered." );
-        LOG( "Script engine " + name + " unregistered." );
+        //LOG( "Script engine '%1' unregistered." );
+        LOG( "Script engine '" + name + "' unregistered." );
     }
     //-----------------------------------------------------------------------
     ScriptEnginePtr ScriptManager::getScriptEngine(const String& name)

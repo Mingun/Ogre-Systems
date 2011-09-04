@@ -33,6 +33,8 @@ public:
     LuaBridge(lua_State* _L, int idx = 0) : L( _L ), mIndex( idx ) {
         //mStackSize = idx > 0 ? lua_gettop(_L) : -lua_gettop(_L);
     }
+    // Группа методов для передачи абстрактных аргументов
+    // в структуры скриптового движка.
     virtual void pack(bool value)   { lua_pushboolean(L, value); }
     virtual void pack(int value)    { lua_pushnumber (L, value); }
     virtual void pack(double value) { lua_pushnumber (L, value); }
@@ -52,14 +54,7 @@ public:
         }
     }
     virtual void pack(const IScriptablePtr& value) {
-        // Получаем смещеный на размер указателя указатель.
-        // Там расположен указатель на скриптовый движок.
-        LuaScriptEngine *engine = *static_cast<LuaScriptEngine**>(
-            static_cast<void*>(
-                static_cast<char*>(static_cast<void*>(L)) - sizeof(void*)
-            )
-        );
-        engine->pushObject(value);
+        engine(L)->pushObject(value);
     }
     //FIXME Реализовать pack(const Function* value)!
     virtual void pack(const Function* value) {
@@ -67,6 +62,8 @@ public:
     }
     virtual void pack(const void* value) { lua_pushlightuserdata(L, const_cast<void*>(value)); }
 
+    // Группа методов для передачи агрументов из внутренних структур
+    // скриптового движка в абстрактные аргументы.
     virtual void unpack(bool& value)   { value = static_cast<bool>(lua_toboolean(L, mIndex)); }
     virtual void unpack(int& value)    { value = static_cast<int >(lua_tointeger(L, mIndex)); }
     virtual void unpack(double& value) { value = lua_tonumber (L, mIndex); }
@@ -101,12 +98,16 @@ public:
     virtual void unpack(Function*& value) {
         if ( lua_isfunction(L, mIndex) )
             value = new LuaFunction(L, mIndex);
-        else if ( lua_isstring(L, mIndex) )
-            value = new FileFunction(lua_tostring(L, mIndex));
-        else if ( lua_isstring(L, mIndex) )
-            value = new FileFunction(lua_tostring(L, mIndex), "main");
+        //else if ( lua_isstring(L, mIndex) )
+        //    value = new FileFunction(lua_tostring(L, mIndex));
+        else if ( lua_isnil(L, mIndex) )
+            value = NULL;
     }
     virtual void unpack(void*& value)  { value = lua_touserdata(L, mIndex); }
+
+    // Группа методов для проверки соответствия ожидаемых аргументов
+    // фактическим аргументам, содержащихся во внутренних структурах
+    // скриптового движка.
 
     /// @c bool эквивалентно только Lua типу @c boolean.
     virtual int check(bool value)  { return lua_isboolean(L, mIndex) << 1; }
@@ -130,7 +131,7 @@ public:
         lua_tolstring(L, mIndex, &len);
         return len == 1;
     }
-    /// String эквивалентно Lua типу @c string и частично Lua типу @c number.
+    /// @c String эквивалентно Lua типу @c string и частично Lua типу @c number.
     virtual int check(const String& value) {
         if ( lua_type(L, mIndex) == LUA_TSTRING )
             return 2;
@@ -148,10 +149,11 @@ public:
         return lua_istable(L, mIndex) << 1;
     }
     virtual int check(const Function* value) {
-        return lua_isfunction(L, mIndex)
-            || lua_isstring(L, mIndex) 
-            /*|| lua_isuserdata(L, mIndex) 
-            || lua_islightuserdata(L, mIndex)*/;
+        return lua_isfunction(L, mIndex) << 1
+            //|| lua_isstring(L, mIndex) 
+            || lua_isnil(L, mIndex) 
+            //|| lua_islightuserdata(L, mIndex)
+            ;
     }
     virtual int check(const void* value) {
         return (lua_isuserdata(L, mIndex) || lua_islightuserdata(L, mIndex)) << 1;

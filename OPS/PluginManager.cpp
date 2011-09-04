@@ -27,8 +27,9 @@ namespace Ogre {
 
 	PluginManager::PluginManager(const String& pluginFileName)
         : mLastLoadLib( NULL )
+        , mIsInitialised( false )
 	{
-		// Load plugins
+		// Загружаем плагины
 		if (!pluginFileName.empty())
 			loadPlugins(pluginFileName);
 
@@ -38,7 +39,8 @@ namespace Ogre {
 	//-----------------------------------------------------------------------
 	PluginManager::~PluginManager()
 	{
-		shutdownPlugins();
+        if (mIsInitialised)
+		    shutdownPlugins();
 		LogManager::getSingleton().logMessage("PluginManager Shutdown");
 		// Практически весь остальной код надо разместить здесь
 		unloadPlugins();
@@ -50,12 +52,14 @@ namespace Ogre {
 		LogManager::getSingleton().logMessage("Installing plugin: " + plugin->getName());
 
         mPlugins.push_back( plugin );
-        /// Сопостовляем каждый плагин его библиотеке
+        // Сопостовляем каждый плагин его библиотеке. Здесь мы полагаемся на то,
+        // что плагин вызовет installPlugin в своей функции dllStartPlugin.
         mPluginsMap.insert( PluginsMap::value_type(plugin, mLastLoadLib) );
         mPluginLibsMap.insert( PluginLibsMap::value_type(mLastLoadLib, plugin) );
 		plugin->install();
-        //if (mIsInitialised)
-        //    plugin->initialise();
+        // Если система уже была инициализирована, инициализируем новый плагин.
+        if (mIsInitialised)
+            plugin->initialise();
 
 		LogManager::getSingleton().logMessage("Plugin successfully installed");
 	}
@@ -68,8 +72,9 @@ namespace Ogre {
         PluginInstanceList::iterator it = std::find( mPlugins.begin(), mPlugins.end(), plugin );
         if ( it != mPlugins.end() )
 		{
-            //if (mIsInitialised)
-            //    plugin->shutdown();
+            // Если система уже была инициализирована, отключаем плагин.
+            if (mIsInitialised)
+                plugin->shutdown();
 			plugin->uninstall();
             PluginsMap::iterator i = mPluginsMap.find( *it );
             PluginLibsMap::iterator ii = mPluginLibsMap.find( i->second );
@@ -178,6 +183,7 @@ namespace Ogre {
 		{
 			(*it)->shutdown();
 		}
+        mIsInitialised = false;
 	}
 	//-----------------------------------------------------------------------
 	void PluginManager::initialisePlugins(void)
@@ -187,6 +193,7 @@ namespace Ogre {
 		{
 			(*it)->initialise();
 		}
+        mIsInitialised = true;
 	}
 	//-----------------------------------------------------------------------
 	void PluginManager::unloadPlugins(void)

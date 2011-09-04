@@ -30,6 +30,7 @@ namespace Ogre {
         PluginLibsMap       mPluginLibsMap;
         /// Последняя загруженная библиотека.
         DynLib*             mLastLoadLib;
+        bool                mIsInitialised;
 	public:
 		OGRE_AUTO_MUTEX // public to allow external locking
 

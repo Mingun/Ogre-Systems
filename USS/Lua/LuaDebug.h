@@ -10,7 +10,7 @@
 #define fn(x) __FUNCTION__ ## ":" ## _s(x)
 
 #define TRACE(x)    LOG(fn(__LINE__)),LOG(x)
-#define TRACE_IN    Script::Tracer __tracer__(__FUNCTION__)
+#define TRACE_IN    ::Script::Tracer __tracer__(__FUNCTION__)
 #define TRACE_STACK TRACE( getStackTypes(L) )
 
 extern "C" {
@@ -25,7 +25,7 @@ namespace Script {
         static int  last;
         static char filler;
     public:
-        Tracer(const Ogre::String& fun) 
+        Tracer(const char* fun) 
             : func( fun )
         {
             TRACE( indent + func );
@@ -38,19 +38,8 @@ namespace Script {
         }
     };
 
-class Printer
-{
-    Ogre::Log::Stream stream;
-public:
-    Printer() : stream( Ogre::LogManager::getSingleton().stream() ) {}
-    template<typename T>
-    void operator()(const T* arg)
-    {
-        stream << arg->toString();
-    }
-};
-
-Ogre::String getStackTypes(lua_State* L);
+    
+    Ogre::String getStackTypes(lua_State* L);
 
 } // namespace Script
 

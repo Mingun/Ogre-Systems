@@ -4,6 +4,7 @@
 #include "OES/OgreException.h"
 
 #include "USS/ScriptVar.h"
+#include "USS/ScriptManager.h"
 
 #include "LuaScriptEngine.h"
 #include "LuaBridge.h"
@@ -31,6 +32,8 @@ extern "C" {
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
+// для sizeof(Udata)
+#include "lobject.h"
 }
 #include "LuaUtilityClasses.h"
 
@@ -40,13 +43,15 @@ extern "C" {
 
 LuaScriptEngine::LuaScriptEngine()
     : type( GENERAL )
+    , mUserObjects( sizeof(IScriptablePtr) + sizeof(Udata) )
+    , mShutdown( false )
 {
-    init();
 }
 //------------------------------------------------------------------------
 LuaScriptEngine::~LuaScriptEngine()
 {
-    lua_close(L);
+    if (L != NULL)
+        lua_close(L);
     LOG("LuaScriptEngine engine destroyed.");
 }
 
@@ -173,24 +178,11 @@ bool LuaScriptEngine::compile(DataStreamPtr source, DataStreamPtr target, Script
     return false;
 }
 //------------------------------------------------------------------------
-void LuaScriptEngine::unregister()
-{
-    lua_close(L);
-    L = lua_newstate(LuaScriptEngine::allocateFunction, this);
-}
-//========================================================================
-//                    Д Е Т А Л И   Р Е А Л И З А Ц И И
-//========================================================================
-
 void LuaScriptEngine::init() 
 {
+    mShutdown = false;
     L = lua_newstate(LuaScriptEngine::allocateFunction, this);
-    // Получаем смещеный на размер указателя указатель.
-    // Там расположен указатель на скриптовый движок.
-    void *p = static_cast<void*>(
-        static_cast<char*>(static_cast<void*>(L)) - sizeof(void*)
-    );
-    *static_cast<LuaScriptEngine**>(p) = this;
+    engine(L) = this;
 
     lua_atpanic(L, LuaScriptEngine::panicFunction);
     // регистрируем стандартные библиотеки
@@ -198,25 +190,42 @@ void LuaScriptEngine::init()
     //TODO зарегистрировать объект ScriptEngine, предоставляющем информацию о движке
     //registerObject( "ScriptEngine", new ScriptEngineInfo(), false );
 }
+//------------------------------------------------------------------------
+void LuaScriptEngine::shutdown()
+{
+    mShutdown = true;
+    if (L != NULL) 
+    {
+        lua_close(L);
+        L = NULL;
+    }
+}
+//========================================================================
+//                    Д Е Т А Л И   Р Е А Л И З А Ц И И
+//========================================================================
 
 //------------------------------------------------------------------------
 //--- Общие функции для взаимодействия с Lua -----------------------------
-//------------------------------------------------------------------------
 //------------------------------------------------------------------------
 void* LuaScriptEngine::allocateFunction(void *ud, void *ptr, size_t osize, size_t nsize) 
 {
     LuaScriptEngine* this_ = static_cast<LuaScriptEngine*>(ud);
     (void)osize;
-//TODO Размещать объекты системы в собственном пуле.
-    //FIXME Найте наши объекты и вызвать их деструктор.
-    if (this_->type == LuaScriptEngine::SCRIPTABLE) {
+    if (this_->type == LuaScriptEngine::SCRIPTABLE ||
+        this_->mUserObjects.is_from(ptr) ) 
+    {
         if (nsize == 0) {
-            static_cast<IScriptablePtr*>(ptr)->~SharedPtr<IScriptable>();
-            free(ptr);
+            assert( this_->mUserObjects.get_requested_size() == osize );
+            void* p = static_cast<void*>(static_cast<Udata*>(ptr)+1);
+            static_cast<IScriptablePtr*>(p)->~SharedPtr<IScriptable>();
+            this_->mUserObjects.free(ptr);
             return NULL;
         }
-        else
-            return realloc(ptr, nsize);
+        else 
+        {
+            assert( this_->mUserObjects.get_requested_size() == nsize );
+            return this_->mUserObjects.malloc();
+        }
 
     } else {
         if (nsize == 0) {
@@ -278,10 +287,10 @@ int LuaScriptEngine::dumper(lua_State* L)
 {
     Options* opt = static_cast<Options*>(lua_touserdata(L, 1));
 
-    if ( !opt->engine->load(opt->source) )
+    if ( !opt->mEngine->load(opt->mSource) )
         return 0;
 
-    //lua_dump(L, LuaScriptEnginePrivate::Compiler::writer, opt->target.get(), opt->stripDebug);
+    lua_dump(L, LuaScriptEngine::Compiler::writer, opt->mTarget.get(), opt->mStripDebug);
 
     return 0;
 }

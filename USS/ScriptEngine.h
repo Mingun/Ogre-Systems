@@ -141,10 +141,11 @@ namespace Script {
         virtual bool compile(DataStreamPtr source, DataStreamPtr target, CompileOption options, bool stripDebug = false) = 0;
 
     protected:
+        virtual void init() = 0;
         /** Вызывается при дерегистрации скриптового движка. В этой функции необходимо
             освободить все ресурсы, занятые скриптовым движком
         */
-        virtual void unregister() {}
+        virtual void shutdown() = 0;
 
         /** Ищет наиболее подходящий по параметру индексатор на основе аргумента, полученного
             по @link Bridge мосту@endlink из движка.

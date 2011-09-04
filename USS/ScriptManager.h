@@ -129,6 +129,7 @@ public:
     void setMapExtensionsPolicy(MapExtensionsPolicy policy);
     MapExtensionsPolicy getMapExtensionsPolicy() const;
 
+public:
     /** Override standard Singleton retrieval.
     @remarks
     Why do we do this? Well, it's because the Singleton

@@ -9,6 +9,9 @@
 #include "USS/IDocumentable.h"
 
 namespace Script {
+    /** Базовый класс для всех объектов, которыми можно управлять из
+        скриптов.
+    */
     class IScriptable : public IDocumentable
     {
     public:

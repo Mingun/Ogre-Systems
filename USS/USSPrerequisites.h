@@ -57,7 +57,9 @@ namespace java {
 namespace Script {
 
     using namespace Ogre;
-    typedef GeneralAllocatedObject ScriptableAlloc;
+    typedef CategorisedAllocPolicy<Ogre::MEMCATEGORY_SCRIPTABLE> ScriptableAllocPolicy;
+    typedef AllocatedObject<GeneralAllocPolicy> ScriptableAllocatedObject;
+    typedef ScriptableAllocatedObject ScriptableAlloc;
     
     class IDocumentable;
     class IScriptable;

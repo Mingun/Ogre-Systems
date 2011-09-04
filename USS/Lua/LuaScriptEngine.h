@@ -6,6 +6,12 @@
 #include "USS/USSPrerequisites.h"
 
 #include "USS/ScriptEngine.h"
+#include <boost/pool/pool.hpp>
+
+// Получаем смещеный на размер указателя указатель.
+// Там расположен указатель на скриптовый движок.
+#define engine(L) (*static_cast<LuaScriptEngine**>(\
+    static_cast<void*>(static_cast<void**>(static_cast<void*>(L))-1)))
 
 extern "C" {
 struct lua_State;
@@ -21,6 +27,20 @@ class LuaScriptEngine : public ScriptEngine
         GENERAL
       , SCRIPTABLE
     } type;
+    /** Пул памяти для размещения указателей на IScriptable.
+    @remarks
+        Необходимо вызывать деструкторы указателей тех объектов, которые
+        больше не нужны. Возлагать эту задачу на метаметод __gc опасно,
+        так как пользовательский код может удалить или заменить его. Поэтому
+        деструктор будет вызываться при освобождении памяти. Однако функции
+        выделения нельзя сообщить, что освобождаемая память принадлежит объекту,
+        с помощью флага, как это делалось при выделении памяти. Единственный
+        способ это сделасть - по освобождаемому указателю. Если он выделен из
+        пула, эначит это наш скриптовый объект, в противном случае - какие-то
+        иные данные.
+    */
+    boost::pool<> mUserObjects;
+    bool mShutdown;
 
     struct Scriptable
     {
@@ -89,8 +109,14 @@ public:
     virtual String getType() const;
     virtual ScriptVarList exec(DataStreamPtr script, const String& functionName, const ScriptVarList& args = ScriptVarList::BLANK);
     virtual bool compile(DataStreamPtr source, DataStreamPtr target, CompileOption options, bool stripDebug = false);
+
+public:
+    /// @return @c true, если был сделан запрос на shutdown, @c false иначе.
+    inline bool isShutdown() const { return mShutdown; }
+
 private:
-    virtual void unregister();
+    virtual void init();
+    virtual void shutdown();
     /** Вставляет объект в стек и присваивает ему метатаблицу, регистрируя в
         ней функции, необходимые для его работы.
     @param L
@@ -100,8 +126,6 @@ private:
         сработает assert.
     */
     void pushObject(const IScriptablePtr& object);
-
-    void init();
 
 private:
     static IMethod* findMethodTable(lua_State *L, const FieldList& fields, const String& name);

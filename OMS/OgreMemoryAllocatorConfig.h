@@ -173,10 +173,11 @@ namespace Ogre
 		MEMCATEGORY_SCRIPTING = 6,
 		/// Rendersystem structures
 		MEMCATEGORY_RENDERSYS = 7,
-
+        /// USS Scriptable objects
+        MEMCATEGORY_SCRIPTABLE = 8,
 
 		// sentinel value, do not use
-		MEMCATEGORY_COUNT = 8
+		MEMCATEGORY_COUNT = 9
 	};
 	/** @} */
 	/** @} */

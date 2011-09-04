@@ -2,13 +2,13 @@
 class Options 
 {
 public:
-    LuaScriptEngine* engine;
-    DataStreamPtr    source;
-    DataStreamPtr    target;
-    bool stripDebug;
+    LuaScriptEngine* mEngine;
+    DataStreamPtr    mSource;
+    DataStreamPtr    mTarget;
+    bool mStripDebug;
 public:
     Options(LuaScriptEngine* e, DataStreamPtr s, DataStreamPtr t, bool d)
-        : engine(e), source(s), target(t), stripDebug(d) {}
+        : mEngine(e), mSource(s), mTarget(t), mStripDebug(d) {}
 };
 
 class IFieldFinder : public IField

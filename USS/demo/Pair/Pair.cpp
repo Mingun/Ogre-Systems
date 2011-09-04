@@ -18,19 +18,19 @@ namespace test {
     }
     Pair::~Pair() 
     {
-        LogManager::getSingleton().logMessage( mKey + " destroyed." );
+        StringStream ss;
+        ss << "~Pair():[key=" << mKey << ",value=" << mValue << ']';
+        LogManager::getSingleton().logMessage( ss.str() );
     }
 /*
 -- В lua:
 -----------------------------------------------
-local obj = Pair:new()  -- "<default> created."
---local obj = Pair()    -- второй вариант
-print(obj)              -- "userdata"
+local obj = Pair()
+print(obj)              -- "inctance Pair [key=<default>,value=0]"
 print(obj:getName())    -- "<default>"
 obj:setName('obj')
 print(obj:getName())    -- "obj"
-obj:destroy()           -- "obj destroyed."
-print(obj)              -- "nil"
+obj:destroy()           -- "~Pair()"
 
 ## В Python:
 ###############################################
@@ -39,7 +39,6 @@ print(obj)              #
 print(obj.getName())    # "<default>"
 obj.setName('obj')
 print(obj.getName())    # "obj"
-obj.destroy()           # "obj destroyed."
-print(obj)              # "nil"
+obj.destroy()           # "~Pair()"
  */
 }

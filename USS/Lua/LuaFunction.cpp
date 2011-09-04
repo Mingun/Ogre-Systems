@@ -5,11 +5,17 @@
 #include "LuaFunction.h"
 #include "LuaBridge.h"
 #include "LuaDebug.h"
+#include "LuaScriptEngine.h"
 
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
 }
+#if OGRE_COMPILER == OGRE_COMPILER_MSVC
+// 'argument' : conversion from 'size_t' to 'int', possible loss of data
+#   pragma warning(push)
+#   pragma warning(disable : 4267)
+#endif
 
 LuaFunction::LuaFunction(lua_State* l, int index)
     : _Base( StringUtil::BLANK ), L(l), mIndex(0)
@@ -38,12 +44,16 @@ LuaFunction::LuaFunction(lua_State* l, int index)
         if ( ar.source[0] == '@' )
             mFileName = String(ar.source+1);
     }
+    // Сохраняем функцию для дальнейшего использования.
     mIndex = luaL_ref( L, LUA_REGISTRYINDEX );// стек: []
 }
 
 LuaFunction::~LuaFunction()
 {
-    luaL_unref( L, LUA_REGISTRYINDEX, mIndex );
+    // При shutdown-е некоторые структуры Lua уже разрушены
+    // и использовать этот метод нельзя.
+    if ( !engine(L)->isShutdown() )
+        luaL_unref( L, LUA_REGISTRYINDEX, mIndex );
 }
 
 void LuaFunction::eval(const ScriptVarList& inArgs, ScriptVarList& outArgs) const 
@@ -52,8 +62,10 @@ void LuaFunction::eval(const ScriptVarList& inArgs, ScriptVarList& outArgs) cons
     lua_rawgeti( L, LUA_REGISTRYINDEX, mIndex ); // стек: [func]
     assert( lua_isfunction(L, -1) );
 
-    inArgs.pack( LuaBridge(L) );         // стек: [func ...]
-    lua_call( L, inArgs.size(), outArgs.size() );// стек: [func ...]
-    outArgs.unpack( LuaBridge(L, 1) );      // стек: [func ...]
-    lua_pop( L, static_cast<int>(outArgs.size())+1 ); // стек: []
+    inArgs.pack( LuaBridge(L) );         // стек: [func {inArgs}]
+    lua_call( L, inArgs.size(), outArgs.size() );// стек: [{outArgs}]
+    outArgs.unpack( LuaBridge(L, 1) );      // стек: [{outArgs}]
+    lua_pop( L, static_cast<int>(outArgs.size()) ); // стек: []
 }
+#if 
+#pragma warning(pop)
