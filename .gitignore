@@ -1,0 +1,16 @@
+*.log
+*.exe
+*.lib
+*.a
+*.exp
+*.dll
+# Файлы студии
+*.pdb
+*.exp
+*.ilk
+*.lib
+*.vcproj.*.user
+*.ncb
+*.suo
+# Объектники
+obj/

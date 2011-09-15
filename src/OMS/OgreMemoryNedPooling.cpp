@@ -33,8 +33,19 @@ THE SOFTWARE.
 
 #if OGRE_MEMORY_ALLOCATOR == OGRE_MEMORY_ALLOCATOR_NEDPOOLING
 
+#if OGRE_COMPILER == OGRE_COMPILER_MSVC
+//'argument' : conversion from 'size_t' to 'DWORD', possible loss of data
+#   pragma warning(push)
+#   pragma warning(disable : 4267)
+#endif
+
 // include ned implementation
 #include <OMS/nedmalloc/nedmalloc.c>
+
+#if OGRE_COMPILER == OGRE_COMPILER_MSVC
+//'argument' : conversion from 'size_t' to 'DWORD', possible loss of data
+#   pragma warning(pop)
+#endif
 
 namespace Ogre
 {

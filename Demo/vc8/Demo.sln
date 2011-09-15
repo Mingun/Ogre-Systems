@@ -1,0 +1,83 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "..\Core\vc8\Core.vcproj", "{F78F123F-5682-414C-B394-2E391DA3B423}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LuaScriptEngine", "..\Plugins\LuaScriptEngine\vc8\LuaScriptEngine.vcproj", "{0A68CF47-70F0-4093-AC1B-28C6B8A49729}"
+	ProjectSection(ProjectDependencies) = postProject
+		{204E102D-720B-4328-810B-9BD898D78CA3} = {204E102D-720B-4328-810B-9BD898D78CA3}
+		{779A9F8F-4D7A-4720-B52A-C5282FB697DA} = {779A9F8F-4D7A-4720-B52A-C5282FB697DA}
+		{F78F123F-5682-414C-B394-2E391DA3B423} = {F78F123F-5682-414C-B394-2E391DA3B423}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Object", "..\Plugins\Object\vc8\Object.vcproj", "{AE904476-0BD3-4422-A91C-A958D025E36B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F78F123F-5682-414C-B394-2E391DA3B423} = {F78F123F-5682-414C-B394-2E391DA3B423}
+		{204E102D-720B-4328-810B-9BD898D78CA3} = {204E102D-720B-4328-810B-9BD898D78CA3}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Graph", "..\Plugins\Graph\vc8\Graph.vcproj", "{C36CE736-BFAE-4BF8-8209-92C942BAF747}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F78F123F-5682-414C-B394-2E391DA3B423} = {F78F123F-5682-414C-B394-2E391DA3B423}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Example", "..\Plugins\Example\vc8\Example.vcproj", "{7AD8C6B8-4E22-42A4-A24E-D1C42C567740}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F78F123F-5682-414C-B394-2E391DA3B423} = {F78F123F-5682-414C-B394-2E391DA3B423}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Loader", "..\Loader\vc8\Loader.vcproj", "{BE169F44-FEE0-4217-B330-B7CA175B7093}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F78F123F-5682-414C-B394-2E391DA3B423} = {F78F123F-5682-414C-B394-2E391DA3B423}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScriptEngine", "..\Plugins\ScriptEngine\vc8\ScriptEngine.vcproj", "{204E102D-720B-4328-810B-9BD898D78CA3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F78F123F-5682-414C-B394-2E391DA3B423} = {F78F123F-5682-414C-B394-2E391DA3B423}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lua 5.1", "..\Plugins\LuaScriptEngine\Dependencies\Lua\vc8\vc8.vcproj", "{779A9F8F-4D7A-4720-B52A-C5282FB697DA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F78F123F-5682-414C-B394-2E391DA3B423}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F78F123F-5682-414C-B394-2E391DA3B423}.Debug|Win32.Build.0 = Debug|Win32
+		{F78F123F-5682-414C-B394-2E391DA3B423}.Release|Win32.ActiveCfg = Release|Win32
+		{F78F123F-5682-414C-B394-2E391DA3B423}.Release|Win32.Build.0 = Release|Win32
+		{0A68CF47-70F0-4093-AC1B-28C6B8A49729}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0A68CF47-70F0-4093-AC1B-28C6B8A49729}.Debug|Win32.Build.0 = Debug|Win32
+		{0A68CF47-70F0-4093-AC1B-28C6B8A49729}.Release|Win32.ActiveCfg = Release|Win32
+		{0A68CF47-70F0-4093-AC1B-28C6B8A49729}.Release|Win32.Build.0 = Release|Win32
+		{AE904476-0BD3-4422-A91C-A958D025E36B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AE904476-0BD3-4422-A91C-A958D025E36B}.Debug|Win32.Build.0 = Debug|Win32
+		{AE904476-0BD3-4422-A91C-A958D025E36B}.Release|Win32.ActiveCfg = Release|Win32
+		{AE904476-0BD3-4422-A91C-A958D025E36B}.Release|Win32.Build.0 = Release|Win32
+		{C36CE736-BFAE-4BF8-8209-92C942BAF747}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C36CE736-BFAE-4BF8-8209-92C942BAF747}.Debug|Win32.Build.0 = Debug|Win32
+		{C36CE736-BFAE-4BF8-8209-92C942BAF747}.Release|Win32.ActiveCfg = Release|Win32
+		{C36CE736-BFAE-4BF8-8209-92C942BAF747}.Release|Win32.Build.0 = Release|Win32
+		{7AD8C6B8-4E22-42A4-A24E-D1C42C567740}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7AD8C6B8-4E22-42A4-A24E-D1C42C567740}.Debug|Win32.Build.0 = Debug|Win32
+		{7AD8C6B8-4E22-42A4-A24E-D1C42C567740}.Release|Win32.ActiveCfg = Release|Win32
+		{7AD8C6B8-4E22-42A4-A24E-D1C42C567740}.Release|Win32.Build.0 = Release|Win32
+		{BE169F44-FEE0-4217-B330-B7CA175B7093}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BE169F44-FEE0-4217-B330-B7CA175B7093}.Debug|Win32.Build.0 = Debug|Win32
+		{BE169F44-FEE0-4217-B330-B7CA175B7093}.Release|Win32.ActiveCfg = Release|Win32
+		{BE169F44-FEE0-4217-B330-B7CA175B7093}.Release|Win32.Build.0 = Release|Win32
+		{204E102D-720B-4328-810B-9BD898D78CA3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{204E102D-720B-4328-810B-9BD898D78CA3}.Debug|Win32.Build.0 = Debug|Win32
+		{204E102D-720B-4328-810B-9BD898D78CA3}.Release|Win32.ActiveCfg = Release|Win32
+		{204E102D-720B-4328-810B-9BD898D78CA3}.Release|Win32.Build.0 = Release|Win32
+		{779A9F8F-4D7A-4720-B52A-C5282FB697DA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{779A9F8F-4D7A-4720-B52A-C5282FB697DA}.Debug|Win32.Build.0 = Debug|Win32
+		{779A9F8F-4D7A-4720-B52A-C5282FB697DA}.Release|Win32.ActiveCfg = Release|Win32
+		{779A9F8F-4D7A-4720-B52A-C5282FB697DA}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

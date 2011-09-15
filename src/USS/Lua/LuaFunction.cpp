@@ -51,7 +51,7 @@ LuaFunction::LuaFunction(lua_State* l, int index)
 LuaFunction::~LuaFunction()
 {
     // При shutdown-е некоторые структуры Lua уже разрушены
-    // и использовать этот метод нельзя.
+    // и использовать этот метод нельзя и в сущности уже не нужно.
     if ( !engine(L)->isShutdown() )
         luaL_unref( L, LUA_REGISTRYINDEX, mIndex );
 }
